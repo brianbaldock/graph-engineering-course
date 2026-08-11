@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import Comments from '../components/Comments.astro';
 
 const { entry, prev, next } = Astro.props;
 const d = entry.data;
@@ -22,5 +23,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <span style="text-align:right">{next && <a href={`${base}/lessons/${next.id}/`}>{next.data.title} &rarr;</a>}</span>
     </nav>
     <p style="margin-top:1.5rem"><a href={`${base}/lessons/`}>All lessons</a></p>
+
+    <Comments />
   </div>
 </BaseLayout>

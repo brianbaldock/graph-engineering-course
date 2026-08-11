@@ -46,6 +46,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx astro check
+      - name: Verify analytics and feedback shipped
+        # The GoatCounter failure mode is silent: if the script ever loses
+        # is:inline, Astro bundles it, strips data-goatcounter, and pageviews
+        # quietly go to zero with no error. Assert on the built HTML.
+        run: python3 scripts/verify_integrations.py
       - name: Accessibility check
         run: |
           # pa11y-ci drives a pinned puppeteer-core that demands one exact

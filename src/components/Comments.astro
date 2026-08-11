@@ -1,0 +1,107 @@
+---
+// Feedback and questions, powered by giscus (https://giscus.app).
+//
+// Threads are stored as GitHub Discussions on this repo under the "Q&A"
+// category. Requiring a GitHub account is our spam floor: we run no
+// moderation infrastructure, GitHub owns that. Moderate by managing
+// Discussions in the repo (delete the discussion, the thread is gone).
+//
+// Q&A rather than the blog's Announcements category is deliberate. A course
+// generates questions, and an answerable category lets a reply be marked as
+// the accepted answer, so the next person stuck on the same lesson finds the
+// resolution instead of re-reading the whole thread.
+//
+// Privacy posture matches the rest of the site: we set no cookies, and the
+// giscus iframe is lazy-loaded so it costs nothing until a reader scrolls to
+// it. Config values are public identifiers, not secrets.
+//
+// Theme: giscus renders in an iframe and cannot read our CSS, so we map the
+// site's data-theme to a giscus theme on load, then postMessage the iframe
+// when the toggle flips so the thread follows the page.
+import { GISCUS } from '../consts';
+---
+
+<section class="comments" aria-labelledby="feedback-heading">
+  <h2 id="feedback-heading">Questions and feedback</h2>
+  <p class="comments-note">
+    Stuck on this lesson, spotted an error, or got it working? Sign in with a
+    GitHub account to ask or comment. Threads live as{' '}
+    <a href={`https://github.com/${GISCUS.repo}/discussions`}>GitHub Discussions</a>{' '}
+    on the course repo, so answers stay findable for the next person.
+  </p>
+  <div id="giscus-container"></div>
+</section>
+
+<script
+  is:inline
+  define:vars={{
+    repo: GISCUS.repo,
+    repoId: GISCUS.repoId,
+    category: GISCUS.category,
+    categoryId: GISCUS.categoryId,
+  }}
+>
+  (function () {
+    const container = document.getElementById('giscus-container');
+    if (!container) return;
+
+    // Map site theme -> giscus theme. No data-theme means follow the OS.
+    function giscusTheme() {
+      const t = document.documentElement.getAttribute('data-theme');
+      if (t === 'light') return 'light';
+      if (t === 'dark') return 'dark';
+      return 'preferred_color_scheme';
+    }
+
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    s.setAttribute('data-repo', repo);
+    s.setAttribute('data-repo-id', repoId);
+    s.setAttribute('data-category', category);
+    s.setAttribute('data-category-id', categoryId);
+    s.setAttribute('data-mapping', 'pathname'); // one thread per lesson URL
+    s.setAttribute('data-strict', '1');
+    s.setAttribute('data-reactions-enabled', '1');
+    s.setAttribute('data-emit-metadata', '0');
+    s.setAttribute('data-input-position', 'top');
+    s.setAttribute('data-theme', giscusTheme());
+    s.setAttribute('data-lang', 'en');
+    s.setAttribute('data-loading', 'lazy');
+    s.crossOrigin = 'anonymous';
+    s.async = true;
+    container.appendChild(s);
+
+    // Keep the thread's theme in sync with the site toggle.
+    function sendTheme() {
+      const iframe = document.querySelector('iframe.giscus-frame');
+      if (!iframe) return;
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: giscusTheme() } } },
+        'https://giscus.app'
+      );
+    }
+    const obs = new MutationObserver(sendTheme);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+  })();
+</script>
+
+<style>
+  .comments {
+    margin: 3.5rem 0 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .comments h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.25rem;
+  }
+  .comments-note {
+    color: var(--fg-muted);
+    font-size: 0.92rem;
+    margin: 0 0 1.5rem;
+    max-width: 60ch;
+  }
+</style>
