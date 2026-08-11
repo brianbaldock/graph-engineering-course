@@ -3,7 +3,7 @@
 A hands-on course in agentic graph engineering: knowledge-graph memory for AI
 agents, driven with **Hermes Agent** and **GitHub Copilot CLI**.
 
-Live site: https://brianbaldock.github.io/graph-engineering-course
+Live site: https://agenticgraphs.dev
 
 ## Why this exists
 

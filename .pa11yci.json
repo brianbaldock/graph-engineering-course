@@ -11,10 +11,10 @@
     ]
   },
   "urls": [
-    "http://localhost:4321/graph-engineering-course/",
-    "http://localhost:4321/graph-engineering-course/lessons/",
-    "http://localhost:4321/graph-engineering-course/setup/",
-    "http://localhost:4321/graph-engineering-course/lessons/00-what-this-is/",
-    "http://localhost:4321/graph-engineering-course/lessons/06-validation-gate/"
+    "http://localhost:4321/",
+    "http://localhost:4321/lessons/",
+    "http://localhost:4321/setup/",
+    "http://localhost:4321/lessons/00-what-this-is/",
+    "http://localhost:4321/lessons/06-validation-gate/"
   ]
 }
