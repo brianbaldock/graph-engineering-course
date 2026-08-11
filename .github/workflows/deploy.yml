@@ -48,10 +48,13 @@ jobs:
       - run: npx astro check
       - name: Accessibility check
         run: |
-          # pa11y-ci drives Puppeteer, which needs a Chrome binary present.
-          # The bundled download is not always on the runner image, so
-          # install it explicitly rather than hoping.
-          npx puppeteer browsers install chrome
+          # pa11y-ci drives a pinned puppeteer-core that demands one exact
+          # Chrome build. Installing "chrome" alone pulls latest (151) and
+          # still fails, so pin the version puppeteer-core resolves to and
+          # point pa11y at that binary explicitly.
+          CHROME_PATH=$(npx puppeteer browsers install chrome@148.0.7778.97 | awk '{print $2}')
+          echo "Using Chrome at $CHROME_PATH"
+          export PUPPETEER_EXECUTABLE_PATH="$CHROME_PATH"
           npx astro preview --port 4321 &
           npx wait-on http://localhost:4321/ -t 60000
           npx pa11y-ci --config .pa11yci.json
