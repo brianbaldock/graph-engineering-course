@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<BaseLayout title="Setup" description="Get the graph engineering labs running in about ten minutes.">
+  <div class="wrap prose-wrap" style="padding-top:2.2rem">
+    <h1>Setup</h1>
+    <p class="muted">Ten minutes. No API key needed for anything in Parts 1 through 3.</p>
+
+    <h2>1. Lab code</h2>
+    <pre><code>git clone https://github.com/brianbaldock/graph-engineering-course
+cd graph-engineering-course/labs
+python3 -m venv .venv
+.venv/bin/pip install pytest mcp</code></pre>
+
+    <h2>2. Confirm it works</h2>
+    <pre><code>.venv/bin/python -m pytest tests/ -q</code></pre>
+    <p>Expected:</p>
+    <pre><code>...............                                                          [100%]
+15 passed in 0.06s</code></pre>
+
+    <h2>3. Run the pipeline</h2>
+    <pre><code>.venv/bin/python -m graphlab.pipeline</code></pre>
+    <p>You should see episodes ingested through the validation gate, a temporal close, and three retrieval queries with cited edges.</p>
+
+    <h2>4. Pick a driver</h2>
+    <p>You only need one.</p>
+    <div class="card" style="margin-bottom:.8rem">
+      <strong>GitHub Copilot CLI</strong>
+      <p class="muted" style="margin:.4rem 0 .6rem;font-size:.93rem">Model-agnostic, one subscription. Best for feeling the routing idea.</p>
+      <pre style="margin:0"><code>copilot --version
+gh auth status</code></pre>
+    </div>
+    <div class="card">
+      <strong>Hermes Agent</strong>
+      <p class="muted" style="margin:.4rem 0 .6rem;font-size:.93rem">Native MCP client plus durable memory. Best for ambient graph access in every conversation.</p>
+      <pre style="margin:0"><code>pip install mcp   # optional dependency; MCP is silently disabled without it</code></pre>
+    </div>
+
+    <h2>Optional: production track</h2>
+    <p>Only needed for Lesson 10. Docker for Neo4j, <code>uv</code> for the Graphiti MCP server, and a provider API key if you want real LLM extraction.</p>
+
+    <div class="callout">
+      <strong>Use absolute paths.</strong> MCP servers launch as subprocesses with a working directory you do not control. Relative paths in an MCP config are the most common setup failure in both drivers.
+    </div>
+
+    <p style="margin-top:2rem"><a href={`${base}/lessons/00-what-this-is/`}>Start with Lesson 0 &rarr;</a></p>
+  </div>
+</BaseLayout>

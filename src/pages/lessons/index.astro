@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const lessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const parts: string[] = [];
+for (const l of lessons) if (!parts.includes(l.data.part)) parts.push(l.data.part);
+const total = lessons.reduce((s, l) => s + l.data.minutes, 0);
+---
+<BaseLayout title="Lessons">
+  <div class="wrap prose-wrap" style="padding-top:2.2rem">
+    <h1>Lessons</h1>
+    <p class="muted">{lessons.length} lessons, roughly {Math.round(total / 60)} hours if you do the labs.</p>
+    {parts.map((part) => (
+      <section>
+        <h2>{part}</h2>
+        <ol style="list-style:none;padding:0;margin:0;display:grid;gap:.7rem">
+          {lessons.filter((l) => l.data.part === part).map((l) => (
+            <li class="card">
+              <a href={`${base}/lessons/${l.id}/`} style="font-weight:600">{l.data.order}. {l.data.title}</a>
+              {l.data.hands_on && <span class="pill pill-accent" style="margin-left:.5rem">Hands-on</span>}
+              <span class="pill" style="margin-left:.4rem">{l.data.minutes} min</span>
+              <p class="muted" style="margin:.4rem 0 0;font-size:.93rem">{l.data.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

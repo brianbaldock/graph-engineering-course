@@ -1,0 +1,26 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+const { entry, prev, next } = Astro.props;
+const d = entry.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<BaseLayout title={d.title} description={d.summary}>
+  <div class="wrap prose-wrap" style="padding-top:2.2rem">
+    <p style="margin:0 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <span class="pill">{d.part}</span>
+      <span class="pill">{d.minutes} min</span>
+      {d.hands_on && <span class="pill pill-accent">Hands-on</span>}
+    </p>
+    <h1>{d.title}</h1>
+    <p class="muted" style="font-size:1.05rem;margin-top:0">{d.summary}</p>
+    <hr />
+    <article><slot /></article>
+
+    <nav style="display:flex;justify-content:space-between;gap:1rem;margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:.92rem">
+      <span>{prev && <a href={`${base}/lessons/${prev.id}/`}>&larr; {prev.data.title}</a>}</span>
+      <span style="text-align:right">{next && <a href={`${base}/lessons/${next.id}/`}>{next.data.title} &rarr;</a>}</span>
+    </nav>
+    <p style="margin-top:1.5rem"><a href={`${base}/lessons/`}>All lessons</a></p>
+  </div>
+</BaseLayout>

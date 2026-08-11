@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test-labs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lab deps
+        run: pip install pytest mcp
+      - name: Run lab tests
+        working-directory: labs
+        run: python -m pytest tests/ -q
+      - name: Run the pipeline end to end
+        working-directory: labs
+        run: python -m graphlab.pipeline
+      - name: Verify the MCP server loads
+        working-directory: labs
+        run: python verify_mcp.py
+
+  build:
+    needs: test-labs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx astro check
+      - name: Accessibility check
+        run: |
+          npx astro preview --port 4321 &
+          npx wait-on http://localhost:4321/graph-engineering-course/ -t 60000
+          npx pa11y-ci --config .pa11yci.json
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

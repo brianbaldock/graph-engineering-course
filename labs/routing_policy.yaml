@@ -1,0 +1,53 @@
+# Graph routing policy
+#
+# This file is the deliverable of Lesson 7. It is the thing that turns
+# "spend intelligence where intelligence is needed" from a slogan into a
+# configuration your system actually reads.
+#
+# Load it, don't admire it:
+#     import yaml; POLICY = yaml.safe_load(open("routing_policy.yaml"))
+
+ingestion:
+  model: claude-haiku-4-5        # cheap: extraction is mechanical parsing
+  effort: low
+  cache_stable_prefix: true      # schema first, episode last, byte-identical
+  batch_for_backfill: true       # historical data is never time-sensitive
+  max_output_tokens: 2000
+  rules:
+    - Keep extraction instructions byte-identical across every request.
+    - Never template variable data into the cached prefix.
+    - Store timestamps whenever the source provides temporal information.
+    - Validate every entity and edge before writing to the graph.
+    - Reject edges whose endpoints were not declared in the same payload.
+
+traversal:
+  model: claude-opus-4-8         # expensive: multi-hop reasoning is judgment
+  effort: high
+  rules:
+    - Resolve the user's entities before touching the graph.
+    - Retrieve the smallest relevant subgraph; never the whole graph.
+    - Apply temporal filters BEFORE reasoning, not after.
+    - Prefer direct graph evidence over model assumptions.
+    - Cite the specific edges used to construct the answer.
+    - If the retrieved subgraph is insufficient, say so instead of guessing.
+
+retrieval:
+  default_hops: 1
+  max_hops: 2
+  max_edges: 60                  # hop limits alone do not bound a hub node
+  hybrid: true                   # vector finds the neighbourhood, graph explains it
+
+never:
+  - Send the entire graph to the model.
+  - Rebuild or reorder the extraction prefix between requests.
+  - Run large historical backfills synchronously.
+  - Ask the model to invent missing relationships.
+  - Treat a vector similarity hit as a verified relationship.
+  - Let unvalidated extraction write directly to production.
+
+budget:
+  # Fill these in from YOUR measured numbers in Lesson 9. Numbers you did
+  # not measure are decoration.
+  target_cost_per_episode_usd: null
+  measured_cost_per_episode_usd: null
+  measured_cache_hit_rate: null

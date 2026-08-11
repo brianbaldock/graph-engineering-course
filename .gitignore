@@ -1,0 +1,15 @@
+# build output
+dist/
+.astro/
+node_modules/
+
+# python
+labs/.venv/
+__pycache__/
+*.pyc
+labs/*.db
+labs/memory.db
+
+# env
+.env
+.DS_Store

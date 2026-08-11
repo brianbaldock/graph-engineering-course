@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+import { SITE_TITLE, SITE_DESCRIPTION, REPO_URL } from '../consts';
+
+interface Props { title?: string; description?: string; }
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const pageTitle = title ? `${title} — ${SITE_TITLE}` : `${SITE_TITLE} — Stop prompting. Start building agentic graphs.`;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href={Astro.url.href} />
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header style="border-bottom:1px solid var(--border);background:var(--bg-elev)">
+      <div class="wrap" style="display:flex;align-items:center;gap:1.25rem;padding-top:.8rem;padding-bottom:.8rem;flex-wrap:wrap">
+        <a href={`${base}/`} style="font-weight:700;color:var(--fg);text-decoration:none">
+          <span style="color:var(--accent)">◆</span> {SITE_TITLE}
+        </a>
+        <nav style="display:flex;gap:1rem;font-size:.92rem;margin-left:auto;align-items:center">
+          <a href={`${base}/lessons/`}>Lessons</a>
+          <a href={`${base}/setup/`}>Setup</a>
+          <a href={REPO_URL}>Repo</a>
+          <button id="theme-toggle" type="button" aria-label="Toggle colour theme"
+            style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--fg);cursor:pointer;padding:.2rem .5rem;font-size:.85rem">
+            ☾/☀
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main"><slot /></main>
+
+    <footer style="border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--fg-muted);font-size:.87rem">
+      <div class="wrap">
+        <p style="margin:0 0 .4rem">
+          Built by Brian Baldock. Code MIT-licensed, prose CC BY 4.0.
+        </p>
+        <p style="margin:0">
+          This course teaches an architecture, not a marketing claim. See{' '}
+          <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
+        </p>
+      </div>
+    </footer>
+
+    <script is:inline>
+      document.getElementById('theme-toggle')?.addEventListener('click', function () {
+        var cur = document.documentElement.getAttribute('data-theme');
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      });
+    </script>
+  </body>
+</html>

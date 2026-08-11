@@ -1,0 +1,20 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 30000,
+    "wait": 500,
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+    },
+    "ignore": [
+      "WCAG2AA.Principle4.Guideline4_1.4_1_1.F77"
+    ]
+  },
+  "urls": [
+    "http://localhost:4321/graph-engineering-course/",
+    "http://localhost:4321/graph-engineering-course/lessons/",
+    "http://localhost:4321/graph-engineering-course/setup/",
+    "http://localhost:4321/graph-engineering-course/lessons/00-what-this-is/",
+    "http://localhost:4321/graph-engineering-course/lessons/06-validation-gate/"
+  ]
+}

@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { SITE_TAGLINE } from '../consts';
+
+const lessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const first = lessons[0];
+---
+<BaseLayout>
+  <section class="wrap" style="padding:3.5rem 1.25rem 1rem;max-width:52rem">
+    <p class="pill pill-accent">Free · Hands-on · No API key required</p>
+    <h1 style="font-size:2.6rem;margin-top:1rem">Graph Engineering</h1>
+    <p style="font-size:1.22rem;color:var(--fg-muted);margin-top:.4rem">{SITE_TAGLINE}</p>
+
+    <p style="margin-top:1.6rem">
+      Build agent memory that survives the session: a temporal knowledge graph with a
+      validation gate, cheap cached extraction, bounded retrieval that cites its evidence,
+      and a routing policy that spends intelligence only where intelligence is needed.
+    </p>
+    <p>
+      Driven with <strong>Hermes Agent</strong> and <strong>GitHub Copilot CLI</strong>.
+      Every command on this site was run before it was published.
+    </p>
+
+    <p style="margin-top:2rem;display:flex;gap:.8rem;flex-wrap:wrap">
+      <a href={`${base}/lessons/${first.id}/`}
+         style="background:var(--accent);color:#06120d;font-weight:650;padding:.6rem 1.2rem;border-radius:8px;text-decoration:none">
+        Start the course
+      </a>
+      <a href={`${base}/lessons/`}
+         style="border:1px solid var(--border);padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;color:var(--fg)">
+        Browse lessons
+      </a>
+    </p>
+  </section>
+
+  <section class="wrap" style="max-width:52rem;margin-top:1rem">
+    <div class="callout">
+      <strong>Read this first.</strong> This course exists because a claim went viral:
+      "90% of Anthropic engineers shifted to agentic graphs. No more prompting."
+      The percentages are unsourced and drifted between retellings, and the attached
+      video was the Claude Code release demo, not a graph lecture. The architecture
+      underneath is real and worth learning. This course keeps the architecture and
+      audits the rest. <a href={`${base}/lessons/00-what-this-is/`}>The full audit is Lesson 0.</a>
+    </div>
+  </section>
+
+  <section class="wrap" style="max-width:52rem">
+    <h2>What you'll build</h2>
+    <div style="display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+      <div class="card"><strong>A temporal graph</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">Edges carry valid_from and valid_until, so it can answer where someone worked in 2024, not just today.</p></div>
+      <div class="card"><strong>A validation gate</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">Grounding checks and a closed relation vocabulary that stop hallucinated edges from compounding.</p></div>
+      <div class="card"><strong>Cheap extraction</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">A stable cached prefix and batched backfills, with the measurement to prove it works.</p></div>
+      <div class="card"><strong>Bounded retrieval</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">The smallest relevant subgraph, temporally filtered, citing the edges it used.</p></div>
+      <div class="card"><strong>An MCP server</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">Your graph as persistent agent memory in Hermes and Copilot CLI. Verified to load.</p></div>
+      <div class="card"><strong>A routing policy</strong><p class="muted" style="margin:.35rem 0 0;font-size:.92rem">A config file your system reads, not a slogan you repeat.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap" style="max-width:52rem">
+    <h2>The whole idea, in one table</h2>
+    <table>
+      <thead><tr><th>Work</th><th>Volume</th><th>Judgment</th><th>Configuration</th></tr></thead>
+      <tbody>
+        <tr><td>Extraction</td><td>Very high</td><td>Low, mechanical</td><td>Cheap model, cached prefix, batched</td></tr>
+        <tr><td>Traversal and reasoning</td><td>Low</td><td>High, multi-hop</td><td>Frontier model, small precise context</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Everything in this course is a consequence of that split.</p>
+  </section>
+
+  <section class="wrap" style="max-width:52rem">
+    <h2>Course outline</h2>
+    <ol style="list-style:none;padding:0;display:grid;gap:.5rem">
+      {lessons.map((l) => (
+        <li>
+          <a href={`${base}/lessons/${l.id}/`}>{l.data.order}. {l.data.title}</a>
+          {l.data.hands_on && <span class="pill pill-accent" style="margin-left:.5rem">Hands-on</span>}
+        </li>
+      ))}
+    </ol>
+  </section>
+</BaseLayout>
