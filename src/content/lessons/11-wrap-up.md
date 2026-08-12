@@ -73,7 +73,7 @@ Ranked by how much you'll learn per hour:
 
 1. **Point it at your own data.** Your git history, your notes, your team's decision docs. The sample corpus is a teaching aid. Your data has the messy entity resolution and genuine temporal ambiguity that make this interesting.
 2. **Measure your real cache hit rate.** Almost nobody does, and it is the highest-leverage number in the whole system.
-3. **Build the hybrid retrieval seam.** Lesson 2 described it, the labs use plain fuzzy matching. Add real embeddings and fuse the results properly.
+3. **Build the hybrid retrieval seam.** Lesson 2 described it, the labs use plain SQL substring matching, which does not tolerate typos. Add real embeddings and fuse the results properly.
 4. **Compare against Graphiti.** You have a hand-built baseline, which means you can evaluate a library rather than adopt it on faith.
 5. **Write the contradiction detector.** When a new episode conflicts with an existing edge, decide deliberately: update, close, or flag for a human. That decision is where most of the remaining hard problems live.
 

@@ -131,10 +131,12 @@ Real output:
 tools registered: search_entities, get_subgraph, add_knowledge, graph_stats
 temporal close applied on the MCP write path
 history preserved at as_of=2024-06
-retrieval arguments clamped to routing_policy.yaml
+retrieval clamped by artifact: 82 edges exist around Alice, asked for 10000 at 99 hops, endpoint returned 60 (cap 60)
 
 OK: MCP server loads, enforces policy caps, and closes expired facts.
 ```
+
+That clamp line is worth reading closely, because it is the difference between checking a helper and checking the boundary. The verifier seeds more edges than the policy allows, asks the tool for far more than it should get, and then asserts on what the endpoint actually returned. An earlier version called `clamp()` directly and passed even when the clamp had been removed from `get_subgraph`, because the test graph was too small for the cap to bind. Proving a helper works is not proving the endpoint calls it.
 
 The verifier builds a throwaway database in a temporary directory on every run, so that output is identical the first time and the hundredth. An earlier version reused a file in `/tmp` and appended to it, which meant the published "real output" was only ever true on a clean machine. A golden output that drifts is not verification, it is decoration.
 

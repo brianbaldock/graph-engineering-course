@@ -128,15 +128,15 @@ The implementation stops when its collected edges reach `max_edges`, and `graphl
 
 ## Hands-on: write a small measurement harness
 
-Create `labs/measure.py` with the following script. It mirrors the pipeline's extraction, temporal-close handling, validation, and write order. It prints values computed from the run, groups rejections by their real reasons, and calculates the widest-query context ratio.
+Create `labs/measure.py` with the following script. It calls `ingest_episode`, the same ingestion boundary the pipeline and the MCP server use, so what you measure is what actually runs. It prints values computed from the run, groups rejections by their real reasons, and calculates the widest-query context ratio.
 
 ```python
 from collections import Counter
 
 from graphlab.extract import RegexExtractor
+from graphlab.ingest import ingest_episode
 from graphlab.sample_data import ALIASES, EPISODES, KNOWN_PEOPLE
 from graphlab.store import GraphStore
-from graphlab.validate import commit
 
 store = GraphStore()
 for alias, canonical in ALIASES.items():
@@ -146,19 +146,13 @@ extractor = RegexExtractor(known_people=KNOWN_PEOPLE)
 rejections = Counter()
 
 for episode in EPISODES:
-    episode_id = store.add_episode(
-        episode["source"], episode["body"], episode["occurred_at"]
+    _, result, closed = ingest_episode(
+        store,
+        episode["body"],
+        source=episode["source"],
+        occurred_at=episode["occurred_at"],
+        extractor=extractor,
     )
-    payload = extractor.extract(episode["body"], episode["occurred_at"])
-
-    closes = [edge for edge in payload["edges"] if edge.get("_close")]
-    payload["edges"] = [edge for edge in payload["edges"] if not edge.get("_close")]
-    for edge in closes:
-        store.invalidate(
-            edge["source"], edge["relation"], edge["target"], edge["_close"]
-        )
-
-    result = commit(store, payload, episode_id=episode_id)
     print(result.report())
     rejections.update(reason for reason, _ in result.rejected)
 

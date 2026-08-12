@@ -77,7 +77,9 @@ The productive architecture uses both, with a clear division of labour:
 
 Read it as a sentence: **vector retrieval finds the neighbourhood, graph traversal explains the structure, the frontier model synthesizes.**
 
-In practice the seam is usually *entity resolution*. The user's fuzzy phrase goes to the vector store (or plain fuzzy string search, which is what this course's labs use to stay dependency-free). That yields candidate entity names. Those names seed the graph traversal. You'll see exactly this in `mcp_server.py`, where `search_entities` must be called before `get_subgraph`.
+In practice the seam is usually *entity resolution*. The user's loose phrase goes to the vector store (or plain substring search, which is what this course's labs use to stay dependency-free). That yields candidate entity names. Those names seed the graph traversal. You'll see exactly this in `mcp_server.py`, where `search_entities` must be called before `get_subgraph`.
+
+Be precise about what the lab's version does and does not do. `search_entities` runs SQL `LIKE %term%` against entity names and descriptions. That matches substrings, so "Atlas" finds "Project Atlas". It does **not** tolerate typos: "Altas" finds nothing. Real fuzzy matching (edit distance) and semantic matching (embeddings) both belong here in production, and the lab has neither. This is the seam where you would add them.
 
 ## The rule that prevents the worst bug
 
@@ -86,6 +88,13 @@ In practice the seam is usually *entity resolution*. The user's fuzzy phrase goe
 </div>
 
 A graph edge is evidence: someone asserted it, and you can point at the episode that did. A model-generated assumption is not evidence, no matter how confident the prose around it sounds. Lesson 6 builds the gate that enforces this distinction.
+
+Two terms the rest of the course leans on, defined here so they are not doing silent work later:
+
+- An **episode** is one raw input the graph learned from: a document, a message, a commit, a meeting note. It is stored whole, with its own timestamp, and it never gets rewritten. Edges point back to the episode that produced them.
+- **Provenance** is that pointer. It is the difference between "the graph says Alice works at Northwind" and "this specific sentence, from this document, dated March 2024, says so." Provenance is what lets you audit a wrong answer instead of just regretting it.
+
+The reason both matter more in a graph than in a document store: a chunk of text carries its own context with it, but an edge is a bare assertion. Strip the provenance off an edge and you have a claim with no way to check it, which an agent will then retrieve and act on with full confidence.
 
 ## When you don't need a graph
 

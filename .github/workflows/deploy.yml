@@ -70,6 +70,11 @@ jobs:
         # A citation nobody checks is decoration. Fail the build on a
         # dead link, an uncited entry, or an empty registry.
         run: python3 scripts/verify_citations.py
+      - name: Verify published golden output matches the lab
+        # Lesson 8 shipped a stale verify_mcp.py output while its own text
+        # said a golden output that drifts is decoration. Run the commands
+        # and diff against what is published.
+        run: python3 scripts/verify_golden_output.py
       - name: Verify the collaboration disclaimer's numbers
         # The note states how long Brian and Hermes have worked together
         # and how much came out of it. Recompute from the record so the

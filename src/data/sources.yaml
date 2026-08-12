@@ -27,7 +27,7 @@ graphiti-mcp-server:
   checked: "2026-08-12"
   supports:
     - "The Graphiti MCP server ships inside the getzep/graphiti repository under mcp_server/, not as a published package."
-    - "The default database provider is FalkorDB; Neo4j requires explicit selection."
+    - "The default database provider is FalkorDB; Neo4j requires explicit selection via --database-provider neo4j, not NEO4J_* environment variables alone."
     - "The documented default LLM model is gpt-5.5."
     - "The default transport is HTTP at /mcp/, with stdio available for stdio-only clients."
 

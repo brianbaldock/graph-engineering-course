@@ -78,7 +78,8 @@ Then the configuration, matching the shape in the project's own README:
         "--directory", "/absolute/path/to/graphiti/mcp_server",
         "--project", ".",
         "main.py",
-        "--transport", "stdio"
+        "--transport", "stdio",
+        "--database-provider", "neo4j"
       ],
       "env": {
         "NEO4J_URI": "bolt://localhost:7687",
@@ -94,6 +95,10 @@ Then the configuration, matching the shape in the project's own README:
 
 <div class="callout">
 <strong>Verify the entrypoint against your checkout.</strong> The server's entry filename has changed across versions (<code>main.py</code> in the current README, <code>graphiti_mcp_server.py</code> in older docs and in mirrored copies of the instructions). Look at what's actually in your <code>mcp_server/</code> directory and use that. This is the same class of mistake as the fabricated package name: copying a config instead of checking it.
+</div>
+
+<div class="callout">
+<strong>The provider flag is not optional.</strong> Graphiti's MCP server defaults to <strong>FalkorDB</strong>, not Neo4j. Setting <code>NEO4J_URI</code> and friends in <code>env</code> does not switch the backend; without <code>--database-provider neo4j</code> the server starts against FalkorDB and quietly ignores every Neo4j variable you just set. You get a running server, no error, and an empty graph where your data should be. Confirm which backend you are actually on before you load anything into it.
 </div>
 
 For Hermes, the same thing in `~/.hermes/config.yaml`:
@@ -112,6 +117,8 @@ mcp_servers:
       - "main.py"
       - "--transport"
       - "stdio"
+      - "--database-provider"
+      - "neo4j"
     env:
       NEO4J_URI: "bolt://localhost:7687"
       NEO4J_USER: "neo4j"
