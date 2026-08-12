@@ -24,12 +24,12 @@ So:
 - **The architecture underneath is real and worth learning.** That's what this course keeps.
 
 <div class="callout">
-<strong>Why lead with this?</strong> Because the most valuable skill in this field right now is telling a real architectural shift from a repackaged one. If you can't audit the claim, you can't audit the system you build from it.
+<strong>Why lead with this?</strong> Because the single most valuable skill in this field right now is telling a real architectural shift from a repackaged one. If you can't audit the claim, you can't audit the system you build from it.
 </div>
 
 ## What graph engineering actually means
 
-Two distinct things travel under the same name. Knowing which one someone means saves a lot of confusion.
+Two distinct things travel under the same name. Both are in this course, and knowing which one someone means saves a lot of confusion.
 
 **1. Knowledge graph memory.** Your agent stores facts as entities and relationships with timestamps instead of as a pile of text chunks. It can traverse from a thing to its related things, and answer questions about how the world changed over time. This is the substance of the good article that circulated alongside the hype.
 
@@ -37,11 +37,11 @@ Two distinct things travel under the same name. Knowing which one someone means 
 
 ### So what is an "agentic graph"?
 
-The phrase gets thrown around without a definition, which is part of why the hype travels so easily. Here is the one this course uses:
+The phrase gets thrown around without a definition, which is part of why the hype travels so easily. Here is the one this course uses, and it is the reason both halves above are in the same course:
 
 > An **agentic graph** is the pair: a workflow graph that decides what happens next, and a knowledge graph it reads from and writes to. Neither half is agentic on its own. A workflow graph with no memory is a pipeline that forgets. A knowledge graph with no workflow is a database nobody queries.
 
-What makes it *agentic* is the loop. The agent retrieves from the graph, acts, and writes back what it learned, so the next decision is made against a graph its own earlier decisions shaped. That is also why the rest of this course cares so much about validation and time: in a system that reads its own writes, one bad edge is not a bad row, it is a bad belief that gets retrieved and reinforced.
+What makes it *agentic* is the loop. The agent retrieves from the graph, acts, and writes back what it learned, so the next decision is made against a graph its own earlier decisions shaped. That feedback is the whole thing. It is also why the rest of this course cares so much about validation and time: in a system that reads its own writes, one bad edge is not a bad row, it is a bad belief that gets retrieved and reinforced.
 
 Concretely:
 
@@ -49,7 +49,9 @@ Concretely:
 - The **knowledge graph** is Lessons 2, 3, and 6 (structure, time, and the gate that guards it).
 - The **loop** is Lesson 8, where MCP lets a real agent read and write the graph on its own.
 
-Build one half and you have something useful. You do not have an agentic graph.
+If you only build one half, you have something useful. You do not have an agentic graph.
+
+They connect: workflow graphs are how you *build* the knowledge graph affordably, and knowledge graphs are what let workflow nodes share state without ballooning context.
 
 ## The one idea that carries the whole course
 

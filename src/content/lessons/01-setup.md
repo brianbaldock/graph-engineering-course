@@ -6,6 +6,8 @@ summary: "Get one of the two drivers running, plus the lab repo. Ten minutes, no
 minutes: 15
 hands_on: true
 sources:
+  - copilot-cli-install
+  - hermes-agent-install
   - copilot-cli-docs
   - hermes-agent-docs
 ---
@@ -40,6 +42,18 @@ If those tests pass, every lab in this course will run on your machine. Nothing 
 
 Best if you want to *feel* the routing idea. One binary, many models, one subscription.
 
+Install it ([full instructions](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli)):
+
+```bash
+# any platform, via npm
+npm install -g @github/copilot
+
+# or macOS and Linux, via the install script
+curl -fsSL https://gh.io/copilot-install | bash
+```
+
+Copilot CLI needs an active Copilot subscription and authenticates with your existing GitHub credentials. Confirm it landed:
+
 ```bash
 copilot --version
 gh auth status          # Copilot inherits GitHub auth
@@ -73,6 +87,20 @@ Model availability is account-specific and changes. Treat any model list in this
 ## Driver B: Hermes Agent
 
 Best if you want durable memory and MCP tools present in *every* conversation, without re-wiring per session.
+
+Install it ([full instructions](https://hermes-agent.nousresearch.com/docs/getting-started/installation)):
+
+```bash
+# Linux, macOS, WSL2, Termux
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+```
+
+```powershell
+# Windows, in PowerShell
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+```
+
+On Windows or macOS you can instead run the [Hermes Desktop installer](https://hermes-agent.nousresearch.com/), which sets up both the desktop app and the CLI. After installing, `hermes setup` walks you through connecting a model.
 
 Hermes has a native MCP client. Servers listed in `~/.hermes/config.yaml` are connected at startup, their tools discovered, and those tools injected into every platform toolset:
 

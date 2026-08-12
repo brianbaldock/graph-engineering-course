@@ -49,6 +49,24 @@ mcp-specification:
   supports:
     - "MCP is an open protocol for exposing tools and resources to model clients over stdio or HTTP."
 
+copilot-cli-install:
+  title: "Installing GitHub Copilot CLI"
+  publisher: "GitHub"
+  url: "https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli"
+  checked: "2026-08-12"
+  supports:
+    - "Copilot CLI installs via npm install -g @github/copilot on any platform."
+    - "macOS and Linux can install via the gh.io/copilot-install script."
+
+hermes-agent-install:
+  title: "Hermes Agent installation guide"
+  publisher: "Nous Research"
+  url: "https://hermes-agent.nousresearch.com/docs/getting-started/installation"
+  checked: "2026-08-12"
+  supports:
+    - "Hermes installs on Linux, macOS, WSL2, and Termux via the install.sh script."
+    - "Windows installs via install.ps1 in PowerShell, or the Hermes Desktop installer."
+
 copilot-cli-docs:
   title: "GitHub Copilot CLI documentation"
   publisher: "GitHub"
