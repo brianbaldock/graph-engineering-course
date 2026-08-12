@@ -23,16 +23,22 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install lab deps
-        run: pip install pytest mcp
+        working-directory: labs
+        run: pip install -r requirements.txt
       - name: Run lab tests
         working-directory: labs
         run: python -m pytest tests/ -q
       - name: Run the pipeline end to end
         working-directory: labs
         run: python -m graphlab.pipeline
-      - name: Verify the MCP server loads
+      - name: Seed the demo graph and assert the documented baseline
+        working-directory: labs
+        run: python -m graphlab.seed /tmp/ci-memory.db
+      - name: Verify the MCP server loads, enforces caps, and closes facts
         working-directory: labs
         run: python verify_mcp.py
+      - name: Report the lesson word budget (prose versus code)
+        run: python3 scripts/word_budget.py
 
   build:
     needs: test-labs

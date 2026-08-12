@@ -90,12 +90,12 @@ GitHub Copilot CLI is a useful driver because model selection is per invocation.
 copilot -p "<prompt>" --model <model> --allow-all-tools
 ```
 
-`--allow-all-tools` is mandatory in `-p` mode. Without it, Copilot waits at its first permission prompt, which leaves a non-interactive workflow stuck. Use `--effort low`, `medium`, `high`, or `xhigh` to set reasoning depth. Use `--plan` when you want read-only planning rather than changes.
+`--allow-all-tools` is mandatory in `-p` mode. Without it, Copilot waits at its first permission prompt, which leaves a non-interactive workflow stuck. `--effort` sets reasoning depth; this CLI's parser accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`, but **support is per model, not universal**. Some models reject the flag entirely, and asking for a level a model does not offer fails the call rather than degrading gracefully. Use `--plan` when you want read-only planning rather than changes.
 
-The available model names used in this course include `claude-haiku-4.5`, `claude-sonnet-4.6`, `claude-opus-4.8`, `gpt-5.5`, and `gpt-5.3-codex`. There is no `copilot models` subcommand. Ask the CLI itself instead:
+Model names used in this course include `claude-haiku-4.5`, `claude-sonnet-4.6`, `claude-opus-4.8`, `gpt-5.5`, and `gpt-5.3-codex`. There is no `copilot models` subcommand, and asking a model to narrate its own availability is not verification. Use `auto` when you just need something to run:
 
 ```bash
-copilot -p "list available models" --allow-all-tools --model claude-sonnet-4.5
+copilot -p "list available models" --allow-all-tools --model auto
 ```
 
 Availability can depend on your Copilot account, so discovery belongs in your local setup check.
@@ -106,7 +106,10 @@ Here is a small two-node shell sketch. The cheap node does extraction-shaped wor
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Create the paths this sketch writes to before running it.
+mkdir -p episodes run
 EPISODE_FILE="episodes/atlas-update.txt"
+[ -f "$EPISODE_FILE" ] || echo "Project Atlas now uses Postgres 16." > "$EPISODE_FILE"
 episode="$(<"$EPISODE_FILE")"
 
 candidates="$({
@@ -116,7 +119,6 @@ Return compact JSON only, with entities and edges. Do not write files.
 EPISODE:
 $episode" \
     --model claude-haiku-4.5 \
-    --effort low \
     --allow-all-tools
 })"
 
@@ -135,9 +137,11 @@ $candidates" \
 printf '%s\n' "$judgment" > run/validation-result.json
 ```
 
+Note what is missing from the first call: there is no `--effort`. Reasoning effort is model-specific, and `claude-haiku-4.5` rejects the flag outright. A cheap model is cheap because it does less reasoning, so asking it for a reasoning level is a category error the CLI will refuse.
+
 This is not a substitute for the repository's deterministic validation and commit code. It demonstrates routing. A real pipeline should parse the model output, validate its schema, then pass accepted items to the same gate that protects all writes. If node one returns invalid JSON, record the failure and retry or reject it. Do not pass untrusted prose straight to persistence because a stronger model liked it.
 
-The two calls also expose an economic decision. Extraction has high volume and often mechanical rules, so `claude-haiku-4.5` with low effort is a plausible starting point. Judgment has lower volume and higher consequences, so `claude-opus-4.8` with high effort may be justified. Measure your actual error rate and cost before treating that split as policy.
+The two calls also expose an economic decision. Extraction has high volume and often mechanical rules, so `claude-haiku-4.5` is a plausible starting point. Judgment has lower volume and higher consequences, so `claude-opus-4.8` with high effort may be justified. Measure your actual error rate and cost before treating that split as policy.
 
 ## Parallel nodes and Hermes Agent
 

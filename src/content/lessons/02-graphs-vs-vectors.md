@@ -42,7 +42,7 @@ Questions a graph answers natively and a vector store fundamentally cannot:
 - **Temporal:** "Where did Alice work when Atlas started?" Requires facts that know when they were true.
 - **Aggregation over relationships:** "Who has worked on more than three projects?" Requires counting edges.
 - **Causal chains:** "What decisions led to the current architecture?" Requires ordered, connected events.
-- **Negative facts:** "What does Atlas *not* depend on?" A closed structure can answer this. An open text corpus cannot.
+- **Recorded absence:** "What does Atlas *not* depend on?" A structure can tell you it has **no recorded** dependency, which is a different and weaker claim than "no dependency exists." Absence of an edge is absence of evidence unless you separately commit to a closed-world assumption or store explicit negative facts. An open text corpus cannot even give you the weaker answer.
 
 ## What vectors do better
 

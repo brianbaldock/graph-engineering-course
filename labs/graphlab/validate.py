@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 
 # Relations you actually expect. An open vocabulary is how a graph turns
@@ -37,6 +38,28 @@ ALLOWED_RELATIONS = {
 ALLOWED_TYPES = {"person", "organization", "project", "service", "technology", "place", "event"}
 
 DATE_RE = re.compile(r"^\d{4}(-\d{2}(-\d{2})?)?$")
+
+
+def valid_date(value: str) -> bool:
+    """Accept YYYY, YYYY-MM, or YYYY-MM-DD, and only real calendar dates.
+
+    The regex alone is a shape check, not a date check: it happily
+    accepts 2024-02-31 and 2024-99-99. A graph full of impossible dates
+    still sorts and compares, it just answers temporal questions wrong,
+    which is worse than failing loudly.
+    """
+    value = str(value)
+    if not DATE_RE.match(value):
+        return False
+    parts = value.split("-")
+    try:
+        year = int(parts[0])
+        month = int(parts[1]) if len(parts) > 1 else 1
+        day = int(parts[2]) if len(parts) > 2 else 1
+        date(year, month, day)
+    except ValueError:
+        return False
+    return True
 
 
 @dataclass
@@ -137,8 +160,8 @@ def validate(payload: dict) -> ValidationResult:
             missing = src if src not in known else tgt
             result.rejected.append((f"edge references undeclared entity '{missing}'", raw))
             continue
-        if vf is not None and not DATE_RE.match(str(vf)):
-            result.rejected.append((f"valid_from '{vf}' is not YYYY[-MM[-DD]]", raw))
+        if vf is not None and not valid_date(vf):
+            result.rejected.append((f"valid_from '{vf}' is not a real YYYY[-MM[-DD]] date", raw))
             continue
 
         result.edges.append(

@@ -34,11 +34,12 @@ Graphiti MCP configuration is in Lesson 10.
 git clone https://github.com/brianbaldock/graph-engineering-course
 cd graph-engineering-course/labs
 python3 -m venv .venv
-.venv/bin/pip install pytest mcp
+.venv/bin/pip install -r requirements.txt
 
-.venv/bin/python -m pytest tests/ -q      # 15 passed
-.venv/bin/python -m graphlab.pipeline     # full pipeline, no API key
-.venv/bin/python verify_mcp.py            # confirm the MCP server loads
+.venv/bin/python -m pytest tests/ -q         # 20 passed
+.venv/bin/python -m graphlab.pipeline        # full pipeline, no API key
+.venv/bin/python -m graphlab.seed memory.db  # seed the graph the MCP lesson uses
+.venv/bin/python verify_mcp.py               # confirm the MCP server behaves
 ```
 
 No API key, no database server, no cloud account for Parts 1 through 3.
@@ -48,12 +49,21 @@ No API key, no database server, no cloud account for Parts 1 through 3.
 | File | What it is |
 |---|---|
 | `graphlab/store.py` | Temporal knowledge graph on SQLite. Edges carry `valid_from`/`valid_until` and provenance. |
-| `graphlab/validate.py` | The validation gate. Closed relation vocabulary, normalization, grounding checks. |
+| `graphlab/validate.py` | The validation gate. Closed relation vocabulary, normalization, grounding checks, real calendar dates. |
 | `graphlab/extract.py` | Extraction with a stable cached prefix. Free offline backend plus the real Anthropic shape. |
-| `graphlab/pipeline.py` | End-to-end: episode → extract → validate → commit → retrieve. |
+| `graphlab/ingest.py` | The single ingestion boundary. Every write path goes through it, so temporal closes cannot be skipped. |
+| `graphlab/policy.py` | Loads `routing_policy.yaml` and clamps the retrieval caps it actually enforces. |
+| `graphlab/pipeline.py` | End-to-end: episode, extract, validate, commit, retrieve. |
+| `graphlab/seed.py` | Wipe-and-rebuild the demo graph used by the MCP lesson. |
 | `mcp_server.py` | Exposes the graph over MCP to Hermes and Copilot CLI. |
-| `routing_policy.yaml` | The routing policy as a file your system reads, not a slogan. |
-| `tests/` | 15 tests covering the gate, temporal queries, and retrieval bounds. |
+| `routing_policy.yaml` | The routing policy. Its header states exactly which keys are enforced and which are operator policy. |
+| `tests/` | 20 tests covering the gate, temporal queries, retrieval bounds, and the MCP close regression. |
+
+## Authorship
+
+Written by Brian Baldock with substantial assistance from Hermes, an AI agent, collaborating since May 2026. Hermes did research, wrote and ran the lab code, executed verification, and drafted prose under Brian's direction. Brian reviewed the work and is responsible for the published text and labs.
+
+The principles in these lessons come from operating a real agent deployment. The `graphlab` package is a teaching implementation of those principles, not the production memory system behind that work.
 
 ## Wiring it into an agent
 
@@ -102,4 +112,6 @@ circulated config was wrong, the course says so and gives the verified one.
 
 ## License
 
-Code MIT. Prose CC BY 4.0.
+Code MIT, prose CC BY 4.0. The boundary is stated explicitly in [`LICENSE`](LICENSE) and [`LICENSE-CONTENT`](LICENSE-CONTENT): MIT covers `labs/` and the site implementation, CC BY 4.0 covers the lesson prose in `src/content/lessons/`. Quoted third-party material stays under its own license.
+
+Attribution for the prose: Graph Engineering by Brian Baldock, https://agenticgraphs.dev, CC BY 4.0.

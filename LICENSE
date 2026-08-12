@@ -2,6 +2,13 @@ MIT License
 
 Copyright (c) 2026 Brian Baldock
 
+SCOPE: This license covers the code in this repository (labs/, site
+implementation under src/components/, src/layouts/, src/styles/, and
+build configuration). The course prose in src/content/lessons/ is
+licensed separately under CC BY 4.0; see LICENSE-CONTENT. Where the two
+would otherwise overlap, LICENSE-CONTENT governs the prose and this file
+governs the code.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

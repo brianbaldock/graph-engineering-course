@@ -82,32 +82,53 @@ A historical import of 100,000 conversations is not an interactive request. Nobo
 
 Batch discounts and prompt caching address different parts of the work, so they can stack. Caching reduces the repeated stable prefix. Batching discounts eligible non-urgent requests, including their variable work under the provider's current terms. Keep fresh user-facing ingestion separate if it actually needs an immediate result.
 
+## The minimum that decides whether any of this works
+
+Before the arithmetic, the threshold that makes it real. Providers do not cache arbitrarily short prefixes. Anthropic's documented minimum cacheable prompt length is model-specific: 4,096 tokens for Claude Haiku 4.5 and Claude Opus 4.6/4.5, 1,024 for Opus 4.8 and the Sonnet 4.x/5 line, 512 for Opus 5. Below that, marking a block with `cache_control` does nothing at all.
+
+The failure is silent. From the docs: "Shorter prompts cannot be cached, even if marked with `cache_control`. Any requests to cache fewer than this number of tokens will be processed without caching, and no error is returned."
+
+That matters for this lab. `EXTRACTION_SYSTEM` is about 920 characters, on the order of 200 tokens. Against `claude-haiku-4.5` and its 4,096-token minimum, **the lab's own prefix is far too short to cache**, and the API will not tell you. This is the honest state of the shipped code, not a hypothetical.
+
+There are two defensible responses, and one indefensible one.
+
+The indefensible one is padding the prefix with filler until it crosses 4,096 tokens. That buys a cache hit by inventing thousands of tokens of instructions you did not need, and you pay a cold cache write for all of them. You would be optimizing the metric instead of the bill.
+
+The defensible responses:
+
+1. **Accept that a small extraction prompt does not cache on a high-minimum model.** Keep the prefix tight, expect zero cache activity, and get your savings from the cheap model and batching instead.
+2. **Pick a model whose minimum your genuine prefix can clear**, or genuinely need a large enough schema block. A detailed schema with entity type definitions, relation vocabulary, worked examples, and edge-case rules can legitimately exceed 1,024 tokens. If your prefix is that big because it needs to be, caching pays for itself.
+
+Verify rather than assume. If both `cache_creation_input_tokens` and `cache_read_input_tokens` come back zero, nothing was cached, and the most common reason is missing the minimum.
+
 ## The arithmetic, as an illustration
 
 Use this calculation to understand the shape of the optimization, not as a guaranteed invoice. Provider prices, cache policy, and model availability change. Before budgeting, plug current numbers from the provider's own pricing page into the placeholders below.
 
-Assume 5,000 episodes, each with 800 variable tokens and a reusable 600-token prefix:
+Assume 5,000 episodes, each with 800 variable tokens, against a model with a 1,024-token minimum and a genuine 1,200-token schema prefix that clears it:
 
 | Component | Calculation | Input tokens |
 |---|---:|---:|
 | Variable episode text | 5,000 × 800 | 4,000,000 |
-| Repeated stable prefix | 5,000 × 600 | 3,000,000 |
-| Total at a flat input rate | 4M + 3M | 7,000,000 |
+| Repeated stable prefix | 5,000 × 1,200 | 6,000,000 |
+| Total at a flat input rate | 4M + 6M | 10,000,000 |
 
 Let `P_input` be today's ordinary input cost per million tokens, `P_cached_read` be today's cached-read cost per million tokens, and `D_batch` be the applicable batch multiplier.
 
 ```text
 Flat input cost
-= 7 × P_input
+= 10 × P_input
 
 Cached input shape, after cache warm-up
-= 4 × P_input + 3 × P_cached_read
+= 4 × P_input + 6 × P_cached_read
 
 Cached and batch-eligible input shape
-= D_batch × (4 × P_input + 3 × P_cached_read)
+= D_batch × (4 × P_input + 6 × P_cached_read)
 ```
 
-Those formulas exclude output. The exact bill also depends on cache writes, cache TTL, output tokens, how requests are shaped, retry behavior, and how many calls really hit the cache. The important point is structural: with no cache, you repeatedly buy all 7 million input tokens at the ordinary rate. With a stable cached prefix, the 3 million repeated tokens move to a cheaper class. Batching can reduce the non-urgent portion again.
+Those formulas exclude output and the initial cache write, which is billed at a premium over ordinary input. They also assume your requests actually arrive inside the cache lifetime: the default is five minutes, measured from the start of the request that writes the entry, and it refreshes on each hit. A backfill that trickles one episode every ten minutes caches nothing regardless of prefix size.
+
+The important point is structural: with no cache, you repeatedly buy all 10 million input tokens at the ordinary rate. With a stable cached prefix that clears the minimum, the 6 million repeated tokens move to a cheaper class. Batching can reduce the non-urgent portion again.
 
 Do not paste a stale dollar figure into an architecture review and call it a forecast. Record the model, date, provider price source, request mix, and measured usage alongside your calculation.
 

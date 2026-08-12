@@ -1,15 +1,25 @@
 # Graph routing policy
 #
-# This file is the deliverable of Lesson 7. It is the thing that turns
-# "spend intelligence where intelligence is needed" from a slogan into a
-# configuration your system actually reads.
+# This file is the deliverable of Lesson 7: the thing that turns "spend
+# intelligence where intelligence is needed" from a slogan into a file.
 #
-# Load it, don't admire it:
-#     import yaml; POLICY = yaml.safe_load(open("routing_policy.yaml"))
+# Be precise about what is enforced, because a policy file that claims
+# more than it does is worse than no file at all.
+#
+#   ENFORCED BY THE LAB (graphlab/policy.py, applied in mcp_server.py):
+#     retrieval.max_hops
+#     retrieval.max_edges
+#   Those two are clamped on every MCP retrieval call, because tool
+#   arguments come from a model and are untrusted input.
+#
+#   OPERATOR POLICY (read by you, applied in your agent and your
+#   system prompts): everything else in this file. The lab does not
+#   secretly pick your model or batch your backfills. Lesson 7 shows
+#   where each key maps onto Copilot CLI flags and Hermes config.
 
 ingestion:
-  model: claude-haiku-4-5        # cheap: extraction is mechanical parsing
-  effort: low
+  model: claude-haiku-4.5        # cheap: extraction is mechanical parsing
+  effort: null                   # Haiku 4.5 rejects --effort. Not all models take it.
   cache_stable_prefix: true      # schema first, episode last, byte-identical
   batch_for_backfill: true       # historical data is never time-sensitive
   max_output_tokens: 2000
@@ -21,7 +31,7 @@ ingestion:
     - Reject edges whose endpoints were not declared in the same payload.
 
 traversal:
-  model: claude-opus-4-8         # expensive: multi-hop reasoning is judgment
+  model: claude-opus-4.8         # expensive: multi-hop reasoning is judgment
   effort: high
   rules:
     - Resolve the user's entities before touching the graph.
@@ -33,9 +43,9 @@ traversal:
 
 retrieval:
   default_hops: 1
-  max_hops: 2
-  max_edges: 60                  # hop limits alone do not bound a hub node
-  hybrid: true                   # vector finds the neighbourhood, graph explains it
+  max_hops: 2                    # ENFORCED
+  max_edges: 60                  # ENFORCED. Hop limits alone do not bound a hub node.
+  hybrid: false                  # The lab has no vector index. See Lesson 10.
 
 never:
   - Send the entire graph to the model.

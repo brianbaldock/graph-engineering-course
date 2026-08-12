@@ -22,8 +22,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from graphlab.ingest import ingest_episode
+from graphlab.policy import clamp, load_policy
 from graphlab.store import GraphStore, render_context
-from graphlab.validate import commit
 
 # Server class moved in MCP SDK 2.0: `mcp.server.fastmcp.FastMCP` became
 # `mcp.server.mcpserver.MCPServer`. Support both so this file works on
@@ -41,6 +42,7 @@ DB_PATH = os.environ.get("GRAPHLAB_DB") or (sys.argv[1] if len(sys.argv) > 1 els
 
 mcp = _Server("graphlab")
 store = GraphStore(DB_PATH)
+POLICY = load_policy()
 
 
 @mcp.tool()
@@ -63,8 +65,12 @@ def get_subgraph(entities: list[str], hops: int = 1, as_of: str = "", max_edges:
     entities: canonical names from search_entities
     hops:     1 for direct relationships, 2 for transitive. Never more.
     as_of:    optional YYYY[-MM[-DD]] to see the graph as it was then.
+
+    hops and max_edges are clamped to routing_policy.yaml. Tool arguments
+    arrive from a model, so they are untrusted input and get bounded here.
     """
-    edges = store.subgraph(entities, hops=min(hops, 2), as_of=as_of or None, max_edges=max_edges)
+    hops, max_edges = clamp(hops, max_edges, POLICY)
+    edges = store.subgraph(entities, hops=hops, as_of=as_of or None, max_edges=max_edges)
     if not edges:
         return "No edges found. Do not invent relationships; report the gap."
     return render_context(edges)
@@ -79,14 +85,21 @@ def add_knowledge(
     The text is extracted, validated, and only the surviving entities and
     edges are written. Rejections are reported back so the caller can see
     what did NOT make it in.
-    """
-    from graphlab.extract import RegexExtractor
 
-    eid = store.add_episode(source, episode_text, occurred_at or None)
-    payload = RegexExtractor().extract(episode_text, occurred_at or None)
-    payload["edges"] = [e for e in payload["edges"] if not e.get("_close")]
-    result = commit(store, payload, episode_id=eid)
-    return result.report()
+    Goes through the same ingestion boundary as the pipeline, which means
+    temporal closes are applied. An episode saying someone left a company
+    bounds the existing edge instead of leaving two open.
+    """
+    _eid, result, closed = ingest_episode(
+        store,
+        episode_text,
+        source=source,
+        occurred_at=occurred_at or None,
+    )
+    report = result.report()
+    if closed:
+        report += f"\nclosed {closed} edge(s) that this episode ended"
+    return report
 
 
 @mcp.tool()

@@ -1,0 +1,36 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2026 Brian Baldock
+
+The course prose in this repository is licensed under the Creative Commons
+Attribution 4.0 International License.
+
+SCOPE
+  This license covers the written course content:
+    src/content/lessons/**    lesson prose
+    src/pages/**              site copy authored for this course
+    README.md                 narrative sections
+
+  It does NOT cover the runnable code, which is under the MIT License:
+    labs/**                   the graphlab package, MCP server, tests, scripts
+    src/components/**         site implementation
+    src/layouts/**            site implementation
+    src/styles/**             site implementation
+    astro.config.mjs, package.json, and other build configuration
+
+  Code samples embedded inside lesson prose are MIT, matching the files
+  they are drawn from. Where a lesson quotes third-party documentation,
+  error output, or source, that material remains under its own license
+  and is not relicensed by this file.
+
+ATTRIBUTION
+  Graph Engineering by Brian Baldock, https://agenticgraphs.dev,
+  licensed CC BY 4.0. Indicate if changes were made.
+
+FULL TEXT
+  Deed:      https://creativecommons.org/licenses/by/4.0/
+  Legalcode: https://creativecommons.org/licenses/by/4.0/legalcode
+
+You are free to share and adapt this material for any purpose, including
+commercially, provided you give appropriate credit, link to the license,
+and indicate if changes were made.

@@ -18,16 +18,25 @@ Here is the course policy as it exists in the lab:
 ```yaml
 # Graph routing policy
 #
-# This file is the deliverable of Lesson 7. It is the thing that turns
-# "spend intelligence where intelligence is needed" from a slogan into a
-# configuration your system actually reads.
+# This file is the deliverable of Lesson 7: the thing that turns "spend
+# intelligence where intelligence is needed" from a slogan into a file.
 #
-# Load it, don't admire it:
-#     import yaml; POLICY = yaml.safe_load(open("routing_policy.yaml"))
+# Be precise about what is enforced, because a policy file that claims
+# more than it does is worse than no file at all.
+#
+#   ENFORCED BY THE LAB (graphlab/policy.py, applied in mcp_server.py):
+#     retrieval.max_hops
+#     retrieval.max_edges
+#   Those two are clamped on every MCP retrieval call, because tool
+#   arguments come from a model and are untrusted input.
+#
+#   OPERATOR POLICY (read by you, applied in your agent and your
+#   system prompts): everything else in this file. The lab does not
+#   secretly pick your model or batch your backfills.
 
 ingestion:
-  model: claude-haiku-4-5        # cheap: extraction is mechanical parsing
-  effort: low
+  model: claude-haiku-4.5        # cheap: extraction is mechanical parsing
+  effort: null                   # Haiku 4.5 rejects --effort. Not all models take it.
   cache_stable_prefix: true      # schema first, episode last, byte-identical
   batch_for_backfill: true       # historical data is never time-sensitive
   max_output_tokens: 2000
@@ -39,7 +48,7 @@ ingestion:
     - Reject edges whose endpoints were not declared in the same payload.
 
 traversal:
-  model: claude-opus-4-8         # expensive: multi-hop reasoning is judgment
+  model: claude-opus-4.8         # expensive: multi-hop reasoning is judgment
   effort: high
   rules:
     - Resolve the user's entities before touching the graph.
@@ -51,9 +60,9 @@ traversal:
 
 retrieval:
   default_hops: 1
-  max_hops: 2
-  max_edges: 60                  # hop limits alone do not bound a hub node
-  hybrid: true                   # vector finds the neighbourhood, graph explains it
+  max_hops: 2                    # ENFORCED
+  max_edges: 60                  # ENFORCED. Hop limits alone do not bound a hub node.
+  hybrid: false                  # The lab has no vector index. See Lesson 10.
 
 never:
   - Send the entire graph to the model.
@@ -71,15 +80,21 @@ budget:
   measured_cache_hit_rate: null
 ```
 
-The model identifiers in this file match the Anthropic-style names used by the extraction code. A provider adapter can translate those identifiers where its own CLI uses a different spelling. Do not silently substitute a premium traversal model into the ingestion path because it "seems safer." The policy is making an economic claim about job shape.
+<div class="callout">
+<strong>Enforced versus documented.</strong> Read the header again, because it is the honest part. This lab enforces exactly two keys: <code>retrieval.max_hops</code> and <code>retrieval.max_edges</code>, clamped in <code>graphlab/policy.py</code> and applied on every MCP retrieval call. Everything else is operator policy that you apply in your own agent. A file that says "the system reads this" while the system reads two fields of it is the same unverified confidence this course exists to reject. Know which of your policy is code and which is a note to yourself.
+</div>
+
+Note `hybrid: false`. The lab has no vector index, so claiming hybrid retrieval here would describe a control that does not exist. Lesson 10 covers what changes when you add one.
+
+The model identifiers match the spellings the Copilot CLI accepts today. Do not silently substitute a premium traversal model into the ingestion path because it "seems safer." The policy is making an economic claim about job shape.
 
 ## What each section commits you to
 
-**`ingestion`** treats extraction as high-volume structured parsing. It selects a cheap model at low effort, requires a byte-identical cached prefix, permits batching for old data, caps output at 2,000 tokens, and names the non-negotiable write controls. The final two rules map to the lab's validation gate: entities and edges are checked before the graph is written, and an edge cannot reference an entity the same payload did not declare.
+**`ingestion`** treats extraction as high-volume structured parsing: a cheap model, a byte-identical cached prefix, batching permitted for old data, output capped at 2,000 tokens, and the non-negotiable write controls. The final two rules map to the lab's validation gate: entities and edges are checked before the graph is written, and an edge cannot reference an entity the same payload did not declare.
 
-**`traversal`** spends more where judgment matters. It uses an expensive model at high effort, but it gives that model a small, precise evidence set. The model must resolve entities, retrieve narrowly, filter time before it reasons, prefer graph evidence, cite the edges it uses, and state insufficiency instead of filling the gap with plausible prose.
+**`traversal`** spends more where judgment matters. It uses an expensive model at high effort, but gives that model a small, precise evidence set. The model must resolve entities, retrieve narrowly, filter time before it reasons, prefer graph evidence, cite the edges it uses, and state insufficiency instead of filling the gap with plausible prose.
 
-**`retrieval`** makes the context bound explicit. One hop is the normal request, two is the maximum, and 60 is the hard edge ceiling. `hybrid: true` preserves the division from Lesson 2: vectors find a possible neighbourhood, while the graph supplies the relationships that can be treated as evidence.
+**`retrieval`** makes the context bound explicit, and these are the two keys the lab enforces in code. One hop is the normal request, two is the maximum, 60 is the edge ceiling. `hybrid` is `false` because this lab has no vector index; Lesson 10 covers what changes when you add one.
 
 **`budget`** has `null` values on purpose. A target or measured cost copied from somebody else's architecture is decoration. Lesson 9 supplies the procedure for your own numbers.
 
@@ -100,39 +115,41 @@ A list of prohibitions looks boring until one of them prevents a graph from beco
 
 ## Enforce it at the call boundary
 
-Loading YAML is the easy part. The important move is that every stage obtains its model and effort from the loaded policy, rather than accepting arbitrary values scattered through application code.
+Loading YAML is the easy part. The important move is that limits become code the model cannot talk its way around. The lab does this in `graphlab/policy.py`:
 
 ```python
-from pathlib import Path
+def clamp(hops: int, max_edges: int, policy: dict | None = None) -> tuple[int, int]:
+    """Clamp caller-supplied retrieval bounds to policy."""
+    caps = retrieval_caps(policy)
+    hops = max(1, min(int(hops), caps["max_hops"]))
+    max_edges = max(1, min(int(max_edges), caps["max_edges"]))
+    return hops, max_edges
+```
 
-import yaml
+`mcp_server.py` calls it on every retrieval, because a tool argument arrives from a model and is untrusted input:
 
-POLICY = yaml.safe_load(Path("routing_policy.yaml").read_text())
+```python
+hops, max_edges = clamp(hops, max_edges, POLICY)
+edges = store.subgraph(entities, hops=hops, as_of=as_of or None, max_edges=max_edges)
+```
 
+Model and effort are a different kind of key. Read them from the same file and pass them to whatever makes your model call:
 
-def route(stage: str) -> tuple[str, str]:
-    section = POLICY[stage]
-    return section["model"], section["effort"]
-
-
-ingestion_model, ingestion_effort = route("ingestion")
-traversal_model, traversal_effort = route("traversal")
-
+```python
+POLICY = load_policy()
+ingestion_model = POLICY["ingestion"]["model"]
+traversal_model = POLICY["traversal"]["model"]
 traversal_system = "\n".join(POLICY["traversal"]["rules"])
 ```
 
-Use `ingestion_model` and `ingestion_effort` when the extractor makes a model call. Keep the cache shape from Lesson 4 in that same path. For historical work, make the scheduling code read `batch_for_backfill` rather than relying on an operator to remember it.
-
-Use `traversal_model` and `traversal_effort` only after retrieval has bounded the subgraph. Insert `traversal_system` into the system prompt of the reasoning step along with the rendered graph evidence. The policy words become model instructions, while `default_hops`, `max_hops`, and `max_edges` stay programmatic inputs to retrieval.
-
-Validation is enforced by calling the lab's `commit(store, payload, episode_id=...)`, not by hoping the extraction prompt obeys its own rule. `commit` validates first and writes only entities and edges that survived.
+Insert `traversal_system` into the system prompt of the reasoning step alongside the rendered graph evidence. The policy words become model instructions; the caps stay programmatic. Validation is enforced by calling `commit(store, payload, episode_id=...)`, not by hoping the extraction prompt obeys its own rule.
 
 ## Mapping the policy to Copilot CLI and Hermes
 
-Copilot CLI provides the per-invocation controls. In print mode, `--allow-all-tools` is mandatory. A cheap ingestion-shaped call can use the current CLI model spelling and low effort:
+Copilot CLI provides the per-invocation controls. In print mode, `--allow-all-tools` is mandatory. A cheap ingestion-shaped call uses the current CLI model spelling:
 
 ```bash
-copilot -p "Extract schema-valid entities and explicit relations from this episode." --model claude-haiku-4.5 --effort low --allow-all-tools
+copilot -p "Extract schema-valid entities and explicit relations from this episode." --model claude-haiku-4.5 --allow-all-tools
 ```
 
 For a traversal-shaped request, choose an expensive model and high effort only after your application has retrieved a bounded evidence block:
@@ -141,25 +158,34 @@ For a traversal-shaped request, choose an expensive model and high effort only a
 copilot -p "Answer only from the supplied graph evidence. Cite the edges used, or say the evidence is insufficient." --model claude-opus-4.8 --effort high --allow-all-tools
 ```
 
-The available effort levels are `low`, `medium`, `high`, and `xhigh`. Current model names include `claude-haiku-4.5`, `claude-sonnet-4.6`, `claude-opus-4.8`, and `gpt-5.5`. `--model` and `--effort` route the CLI call. They do not replace your code's cache construction, retrieval cap, batch queue, or validation gate.
+Notice that the ingestion call passes no `--effort`. This CLI's parser accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`, but support is per model rather than universal: `claude-haiku-4.5` rejects the flag, and a model that does not offer a level fails the call instead of quietly degrading. That is why `ingestion.effort` is `null` in the policy file. Check `copilot --help` on your own install, because this list moves.
 
-Hermes has a persistent default model configuration, not a magic automatic routing rule. Keep the default under `model.provider` and `model.default` in Hermes configuration, then make a wrapper or delegated call read this policy when different stages need different choices. For example, a project that uses the Anthropic-side policy identifier can set its ingestion default with:
+`--model` and `--effort` route the CLI call. They do not replace your code's cache construction, retrieval cap, batch queue, or validation gate.
+
+Hermes has a persistent default model configuration, not a magic automatic routing rule. Keep the default under `model.provider` and `model.default` in Hermes configuration, then make a wrapper or delegated call read this policy when different stages need different choices:
 
 ```bash
 hermes config set model.provider anthropic
-hermes config set model.default claude-haiku-4-5
+hermes config set model.default claude-haiku-4.5
 ```
 
 Use `hermes config edit` when you want to inspect the resulting configuration. More importantly, do not confuse a global default with enforcement. The wrapper that loads `routing_policy.yaml` remains responsible for choosing traversal separately and for injecting traversal rules into the reasoning prompt.
 
 ## Hands-on
 
-1. Open `labs/routing_policy.yaml` and compare it to the policy block above. Keep the budget fields null.
-2. Add the `route()` helper to a scratch script and print the two tuples. You should see a low-effort ingestion route and a high-effort traversal route from one source of truth.
-3. Run the free pipeline from `labs` and identify its two enforcement points: validation before graph writes, and bounded `subgraph(...)` retrieval before a model would reason.
+1. Open `labs/routing_policy.yaml` and read the header. Note which two keys are marked ENFORCED and which are operator policy. Keep the budget fields null.
+2. Install the dependency the policy loader needs, then prove the clamp works:
 
 ```bash
-cd labs && .venv/bin/python -m graphlab.pipeline
+cd labs
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest tests/test_graphlab.py -q -k policy
+```
+
+3. Run the free pipeline and identify its two enforcement points: validation before graph writes, and bounded `subgraph(...)` retrieval before a model would reason.
+
+```bash
+.venv/bin/python -m graphlab.pipeline
 ```
 
 Next: wire the graph into Hermes and Copilot CLI as MCP memory.

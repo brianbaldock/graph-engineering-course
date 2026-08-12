@@ -35,7 +35,7 @@ $ curl -s -o /dev/null -w "%{http_code}\n" https://pypi.org/pypi/graphiti-mcp/js
 404
 ```
 
-`graphiti-core` exists as a library. The MCP server is not a published package, it lives in the `mcp_server/` directory of the getzep/graphiti repository and you run it from a checkout. The verified configuration is in Lesson 11.
+`graphiti-core` exists as a library. The MCP server is not a published package, it lives in the `mcp_server/` directory of the getzep/graphiti repository and you run it from a checkout. The verified configuration is in Lesson 10.
 
 <div class="callout">
 <strong>Why this matters more than the typo.</strong> The article was otherwise substantially correct about the architecture. The config was the one part that looks most like a working artifact and is easiest to copy without testing, so it is the part that wasted the most reader time. Run the config before you publish it. That is the whole lesson.
@@ -94,6 +94,22 @@ except ImportError:                                        # pragma: no cover
         raise SystemExit(1)
 ```
 
+## Seed the graph first
+
+The MCP server points at a database file. A fresh clone does not have one, and `labs/*.db` is gitignored on purpose: a binary database is not something to commit and diff. Build it from code before you register anything, or your first agent query will correctly report that it knows nothing.
+
+```bash
+cd labs && .venv/bin/python -m graphlab.seed memory.db
+```
+
+Real output:
+
+```
+seeded memory.db: {'entities': 8, 'edges': 9, 'episodes': 5, 'open_edges': 8, 'aliases': 2}
+```
+
+The seed is wipe-and-rebuild. Running it twice removes the existing file first and reports that it did, so the numbers above stay true instead of drifting upward with duplicate episodes on every run.
+
 ## Verify before you wire
 
 Never register an MCP server you haven't confirmed loads. A broken server usually fails silently at agent startup and you'll spend an hour wondering why the tools aren't there.
@@ -105,21 +121,17 @@ cd labs && .venv/bin/python verify_mcp.py
 Real output:
 
 ```
-MCP server loaded. Tools registered:
-  - search_entities: Find entities in the knowledge graph by name or description.
-  - get_subgraph: Retrieve the smallest relevant subgraph around some entities.
-  - add_knowledge: Store a new episode as validated graph memory.
-  - graph_stats: Report the size and shape of the knowledge graph.
+tools registered: search_entities, get_subgraph, add_knowledge, graph_stats
+temporal close applied on the MCP write path
+history preserved at as_of=2024-06
+retrieval arguments clamped to routing_policy.yaml
 
-accepted: 2 entities, 1 edges
-rejected: 0
-Dana (person)
-GRAPH EVIDENCE (answer only from these edges; say so if insufficient):
-  - Dana --works_at--> Fabrikam [2025 .. present] (episode 1)
-entities=2, edges=1, episodes=1, open_edges=1, aliases=0
+OK: MCP server loads, enforces policy caps, and closes expired facts.
 ```
 
-Four tools registered, a write accepted through the gate, and a retrieval that came back cited. Now it's safe to register.
+The verifier builds a throwaway database in a temporary directory on every run, so that output is identical the first time and the hundredth. An earlier version reused a file in `/tmp` and appended to it, which meant the published "real output" was only ever true on a clean machine. A golden output that drifts is not verification, it is decoration.
+
+Note the second line specifically. It asserts that ingesting "Alice left Northwind" through the MCP tool actually closes the old employment edge, so `as_of=2026-06` returns Contoso alone. That check exists because this exact path was once broken: the server stripped temporal closes and left two employers open forever, while still reporting "accepted" like everything was fine. A status string is not evidence.
 
 ## Driver A: Copilot CLI
 

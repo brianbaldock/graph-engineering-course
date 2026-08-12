@@ -1,0 +1,6 @@
+# Lab dependencies. Pinned loosely on purpose: this is a teaching lab,
+# not a production deployment. CI installs exactly this file so a green
+# build and a learner's venv are the same environment.
+pytest>=8,<9
+mcp>=1.0
+PyYAML>=6,<7

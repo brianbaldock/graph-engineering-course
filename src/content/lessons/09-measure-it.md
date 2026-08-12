@@ -65,7 +65,7 @@ Define an exact matching rule before scoring. For example, an edge might match o
 
 There is no shortcut around hand-labeling. A model cannot fairly grade its own extraction without reproducing the same assumptions. A second model only moves the unmeasured judgment to another model. Fifty carefully labeled episodes is more useful than ten thousand unlabeled ones when you are deciding what to fix.
 
-Duplicate entity rate is another manual-review metric at first. Inspect a sample of entities, identify groups that represent the same real thing but failed to merge, then record the proportion. The lab's `normalize_name()` removes whitespace, trailing punctuation, and common corporate suffixes. `GraphStore.add_alias()` and `GraphStore.resolve()` handle known aliases. Those are useful mechanisms, not evidence that your real corpus has no duplicate entities.
+Duplicate entity rate is another manual-review metric at first. Inspect a sample of entities, identify groups that represent the same real thing but failed to merge, then record the proportion. The lab's `normalize_name()` collapses internal whitespace runs, strips surrounding whitespace and trailing punctuation, and strips common corporate suffixes, so "Apple  Inc." and "Apple" resolve to the same node. `GraphStore.add_alias()` and `GraphStore.resolve()` handle known aliases. Those are useful mechanisms, not evidence that your real corpus has no duplicate entities, and none of them is full entity resolution.
 
 ## Let the validation gate describe extractor failure
 
@@ -114,13 +114,15 @@ Context economy: sent 9 of 9 edges (100% of the graph) for the widest query.
 
 That 100 percent result is deliberate and useful. The graph has only nine edges, and a two-hop expansion from a well-connected node reaches all of them. It demonstrates hop explosion: a hop limit alone does not bound retrieval because one hub entity can expand a two-hop neighbourhood dramatically.
 
-The store protects against this with both controls in its real method signature:
+The store protects against this with both controls. Simplified, with annotations dropped for readability:
 
 ```python
 def subgraph(self, seeds, hops=1, as_of=None, max_edges=60):
 ```
 
-The implementation stops when its collected edges reach `max_edges`, and its own comment states that one hub entity can blow up a two-hop expansion. Re-measure context economy as your graph grows. Do not take the tiny lab's 100 percent as an acceptable production result.
+The actual declaration in `labs/graphlab/store.py` is fully annotated (`seeds: Iterable[str]`, `as_of: str | None`, returning `list[Edge]`). Read the file for the real thing rather than trusting a lesson's paraphrase, which is the habit this whole lesson is arguing for.
+
+The implementation stops when its collected edges reach `max_edges`, and `graphlab/policy.py` clamps both `hops` and `max_edges` again at the MCP tool boundary, because arguments arriving from a model are untrusted input. Re-measure context economy as your graph grows. Do not take the tiny lab's 100 percent as an acceptable production result; a healthy large graph should send a small single-digit percentage.
 
 ## Hands-on: write a small measurement harness
 

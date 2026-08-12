@@ -51,7 +51,29 @@ def test_gate_rejects_bad_type_and_bad_date():
         "edges": [{"source": "A", "target": "B", "relation": "works_at", "valid_from": "last tuesday"}],
     })
     assert res2.edges == []
-    assert any("not YYYY" in r for r, _ in res2.rejected)
+    assert any("not a real" in r for r, _ in res2.rejected)
+
+
+def test_gate_rejects_impossible_calendar_dates():
+    """Shape checks are not date checks.
+
+    A regex accepts 2024-02-31 and 2024-99-99 happily. Those sort and
+    compare like real dates, so they do not crash, they just answer
+    temporal questions wrong. That is the worse failure.
+    """
+    for bad in ("2024-02-31", "2024-99-99", "2024-13-01", "2023-02-29"):
+        res = validate({
+            "entities": [{"name": "A", "type": "person"}, {"name": "B", "type": "organization"}],
+            "edges": [{"source": "A", "target": "B", "relation": "works_at", "valid_from": bad}],
+        })
+        assert res.edges == [], f"{bad} should have been rejected"
+
+    for good in ("2024", "2024-02", "2024-02-29", "2026-12-31"):
+        res = validate({
+            "entities": [{"name": "A", "type": "person"}, {"name": "B", "type": "organization"}],
+            "edges": [{"source": "A", "target": "B", "relation": "works_at", "valid_from": good}],
+        })
+        assert len(res.edges) == 1, f"{good} is a real date and should pass"
 
 
 def test_gate_rejects_self_edge():
@@ -169,3 +191,69 @@ def test_extractor_is_deterministic():
     a = x.extract("Alice joined Northwind 2024.", "2024-01-01")
     b = x.extract("Alice joined Northwind 2024.", "2024-01-01")
     assert a == b
+
+
+# ------------------------------------------------- shared ingestion boundary
+
+def test_agent_ingest_closes_the_old_employment_edge():
+    """The regression that motivated graphlab/ingest.py.
+
+    The MCP server used to strip _close edges and never invalidate, so an
+    agent that learned "Alice left Northwind" left the old edge open and
+    the graph reported two current employers. Assert the temporal
+    readback, not just that the write was accepted: a report saying
+    "accepted" is exactly the status string that hid this bug.
+    """
+    from graphlab.ingest import ingest_episode
+
+    g = GraphStore(":memory:")
+    ingest_episode(g, "Alice joined Northwind 2024.", source="a", occurred_at="2024-01-15")
+    ingest_episode(g, "Alice left Northwind 2026. Alice joined Contoso 2026.",
+                   source="b", occurred_at="2026-04-01")
+
+    now = {e.target for e in g.edges_of("Alice", as_of="2026-06") if e.relation == "works_at"}
+    assert now == {"Contoso"}, f"expected only Contoso, got {now}"
+
+    then = {e.target for e in g.edges_of("Alice", as_of="2024-06") if e.relation == "works_at"}
+    assert then == {"Northwind"}, "history must survive the close"
+
+
+def test_ingest_does_not_close_unrelated_edges():
+    from graphlab.ingest import ingest_episode
+
+    g = GraphStore(":memory:")
+    ingest_episode(g, "Alice joined Northwind 2024.", source="a", occurred_at="2024-01-15")
+    ingest_episode(g, "Bob joined Northwind 2025.", source="b", occurred_at="2025-06-10")
+    ingest_episode(g, "Alice left Northwind 2026.", source="c", occurred_at="2026-04-01")
+
+    bob = {e.target for e in g.edges_of("Bob", as_of="2026-06") if e.relation == "works_at"}
+    assert bob == {"Northwind"}, "closing Alice's edge must not touch Bob's"
+
+
+def test_undated_duplicate_edges_do_not_multiply():
+    """SQLite treats every NULL as distinct, so a plain UNIQUE over a
+    nullable valid_from silently allows duplicate undated edges."""
+    g = GraphStore(":memory:")
+    g.upsert_entity("A", "person")
+    g.upsert_entity("B", "organization")
+    assert g.add_edge("A", "works_at", "B") is True
+    assert g.add_edge("A", "works_at", "B") is False
+    assert g.stats()["edges"] == 1
+
+
+# ------------------------------------------------------- policy enforcement
+
+def test_policy_clamps_untrusted_retrieval_arguments():
+    """Tool arguments arrive from a model. Bound them at the boundary."""
+    from graphlab.policy import clamp, retrieval_caps
+
+    caps = retrieval_caps()
+    hops, edges = clamp(99, 10_000)
+    assert hops <= caps["max_hops"]
+    assert edges <= caps["max_edges"]
+
+    hops, edges = clamp(-5, 0)
+    assert hops >= 1 and edges >= 1
+
+    hops, edges = clamp("nonsense", None)
+    assert hops >= 1 and edges >= 1

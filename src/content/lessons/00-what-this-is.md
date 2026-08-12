@@ -82,3 +82,18 @@ You do not need an Anthropic API key for the core labs. Lessons that cost money 
 <div class="callout">
 <strong>A standing rule for this course.</strong> Every command shown here was run before it was published. Where a widely-circulated config was wrong, this course says so and gives the verified one. You'll hit the first example of that in Lesson 8.
 </div>
+
+## Who wrote this
+
+This course was written by Brian Baldock with substantial assistance from Hermes, an AI agent, working together since May 2026, roughly three months at the time of writing. Hermes did research, wrote and ran the lab code, executed the verification, and drafted prose. Brian directed the work, reviewed it, and is responsible for what is published here. The code is MIT licensed and the prose is CC BY 4.0.
+
+That disclosure matters more than usual here. A course that spends its first page auditing an unsourced viral claim does not get to be quiet about how it was made.
+
+It also sets an honest boundary on the word "we." The operating rules in these lessons come from running a real agent deployment and getting things wrong first:
+
+- **Validate before you write, and record why you rejected something.** Learned by shipping a health check gated on file modification time, which fired incorrectly because an unrelated write looked identical to the event it was watching for. Modification time answers "did this change," not "did this run do its job."
+- **Verify by artifact, never by status string.** Learned from scheduled jobs that reported success while doing no work at all. Lesson 8's verifier exists in its current shape because of that habit.
+- **Close facts temporally instead of overwriting them.** Learned from designing a memory system where losing the previous state made questions about the past unanswerable.
+- **Route cheap and expensive work to different models.** Learned from cost pressure, and from a CLI call that failed outright because a reasoning-effort level is not universal across models. That specific failure is why Lesson 7 no longer publishes an effort list as if it were portable.
+
+The `graphlab` package is a minimal executable textbook for those rules. It is **not** the production memory system behind that collaboration, which is file-backed rather than a SQLite graph. Treating a teaching lab as a production architecture would be exactly the fabrication this course exists to reject. The principles are load-bearing; the lab is how you can run them yourself in five minutes without an API key.

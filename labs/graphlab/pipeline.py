@@ -16,9 +16,9 @@ from __future__ import annotations
 import sys
 
 from .extract import RegexExtractor
+from .ingest import ingest_episode
 from .sample_data import ALIASES, EPISODES, KNOWN_PEOPLE
 from .store import GraphStore, render_context
-from .validate import commit, validate
 
 
 def build(db: str = ":memory:", verbose: bool = True) -> GraphStore:
@@ -30,24 +30,23 @@ def build(db: str = ":memory:", verbose: bool = True) -> GraphStore:
     total_rejected = 0
 
     for ep in EPISODES:
-        eid = store.add_episode(ep["source"], ep["body"], ep["occurred_at"])
-        payload = extractor.extract(ep["body"], ep["occurred_at"])
+        # One shared ingestion boundary, used by the MCP server too.
+        _eid, result, closed = ingest_episode(
+            store,
+            ep["body"],
+            source=ep["source"],
+            occurred_at=ep["occurred_at"],
+            extractor=extractor,
+        )
 
-        # Temporal closes are handled before the gate: "X left Y" means
-        # close the open edge, not create a new one.
-        closes = [e for e in payload["edges"] if e.get("_close")]
-        payload["edges"] = [e for e in payload["edges"] if not e.get("_close")]
-        for c in closes:
-            n = store.invalidate(c["source"], c["relation"], c["target"], c["_close"])
-            if verbose and n:
-                print(f"  ⏳ closed {n} edge(s): {c['source']} works_at {c['target']} until {c['_close']}")
+        if verbose and closed:
+            print(f"  closed {closed} edge(s) that the episode ended")
 
-        result = commit(store, payload, episode_id=eid)
         total_rejected += len(result.rejected)
         if verbose:
             print(f"[{ep['source']}] {result.report().splitlines()[0]}")
             for reason, item in result.rejected:
-                print(f"    ✗ {reason}: {item}")
+                print(f"    rejected {reason}: {item}")
 
     if verbose:
         print(f"\nGraph: {store.stats()}")

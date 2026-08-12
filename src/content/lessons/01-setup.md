@@ -59,11 +59,13 @@ What class of bad extraction still gets through?" \
 <strong>Non-negotiable flag.</strong> In <code>-p</code> (non-interactive) mode you must pass <code>--allow-all-tools</code>. Without it, Copilot hits its first permission prompt and hangs forever with no output.
 </div>
 
-There is no `copilot models` subcommand. To discover what's available, ask Copilot itself:
+There is no `copilot models` subcommand, and asking a model to list its own availability is not verification. Use `auto` and let Copilot pick, then check what it selected:
 
 ```bash
-copilot -p "list available models" --allow-all-tools --model claude-sonnet-4.5
+copilot -p "list available models" --allow-all-tools --model auto
 ```
+
+Model availability is account-specific and changes. Treat any model list in this course as "what worked on the author's account when the lesson was written," and confirm against your own before building a policy on it.
 
 ## Driver B: Hermes Agent
 
@@ -100,7 +102,7 @@ cd graph-engineering-course/labs && pwd
 
 ## Optional: the production track
 
-Only needed for Lesson 11. Skip it for now.
+Only needed for Lesson 10. Skip it for now.
 
 - Docker, for Neo4j
 - `uv`, for running the Graphiti MCP server

@@ -39,9 +39,16 @@ CREATE TABLE IF NOT EXISTS edges (
     valid_from  TEXT,
     valid_until TEXT,
     episode_id  INTEGER REFERENCES episodes(id),
-    confidence  REAL DEFAULT 1.0,
-    UNIQUE (source, relation, target, valid_from)
+    confidence  REAL DEFAULT 1.0
 );
+
+-- Uniqueness has to survive undated edges. A plain
+-- UNIQUE (source, relation, target, valid_from) does NOT: SQLite treats
+-- every NULL as distinct, so two identical undated edges both insert and
+-- the graph quietly grows duplicates. Coalescing to a sentinel in the
+-- index expression is what makes the constraint mean what it says.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_edges_identity
+    ON edges (source, relation, target, COALESCE(valid_from, ''));
 
 CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target);
