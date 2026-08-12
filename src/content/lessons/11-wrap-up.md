@@ -82,7 +82,7 @@ Ranked by how much you'll learn per hour:
 Not a certificate. A repo you can run:
 
 - A temporal knowledge graph with provenance on every edge
-- A validation gate with 27 passing tests
+- A validation gate with 28 passing tests
 - An extraction pipeline built for caching, with a free offline mode
 - Bounded subgraph retrieval that cites its evidence
 - An MCP server exposing it to Hermes and Copilot CLI, verified to load

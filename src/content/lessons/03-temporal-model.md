@@ -62,7 +62,23 @@ g.add_edge("Alice", "works_at", "Contoso", valid_from="2026-03")
 
 `add_edge()` accepts optional `valid_from`, `valid_until`, `episode_id`, and `confidence`, and returns `False` if the edge would duplicate the store's unique `(source, relation, target, valid_from)` combination. A duplicate is not a reason to erase or mutate prior evidence.
 
-Two of those fields are doing work worth naming. `episode_id` is the provenance pointer from Lesson 2: it is what lets `cite()` show which raw input asserted this edge, and it is the difference between an auditable claim and a bare assertion. `confidence` is a float the extractor sets and the validation gate in Lesson 6 thresholds on. Neither is decoration; an edge without provenance cannot be audited, and an edge without confidence cannot be filtered.
+Two of those fields are doing work worth naming, and one of them is a trap.
+
+`episode_id` is the provenance pointer from Lesson 2: it is what lets `cite()` show which raw input asserted this edge, and it is the difference between an auditable claim and a bare assertion.
+
+`confidence` is the trap. It is on the dataclass, it prints, and it looks exactly like a safety control. It is not one. Nothing in the lab reads it:
+
+```
+validate.py mentions of confidence: 0
+extract.py mentions of confidence: 0
+
+validate(confidence=0.01) -> accepted_edges=1 rejected=0
+after commit                -> [('works_at', 'Northwind', 1.0)]
+```
+
+An edge with confidence 0.01 passes the gate, and the value you passed is not even preserved: `commit` stores the default 1.0. The field is a slot waiting for you to wire it, which is the Lesson 6 exercise. Until you do, treat every edge in this graph as asserted with equal weight.
+
+This is worth dwelling on because it is the exact failure mode the course keeps naming. A field that looks like a control but enforces nothing is the same shape as a policy file the system does not read and a verifier that always passes. The honest move is to say so, not to let the field's presence imply a guarantee.
 
 ### The uniqueness constraint has a sharp edge
 

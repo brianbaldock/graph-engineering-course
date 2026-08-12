@@ -61,6 +61,8 @@ Temporal validation         ← is that actually a date?
 Graph write
 ```
 
+Read those stage names as descriptions of intent, not as libraries. Every check is a hand-written Python predicate in `validate.py`; there is no JSON Schema dependency, and "JSON schema validation" here means "is this payload the shape we expect." Duplicate detection is also narrower than the diagram implies: it deduplicates entities *within a single payload*. It does not compare against episodes already in the graph. Cross-episode edge deduplication is handled one layer down, by the store's unique index, which is the `COALESCE` constraint from Lesson 3. Knowing which layer catches what matters the moment a duplicate slips through and you have to decide where to look.
+
 Open `labs/graphlab/validate.py`. It implements exactly that, in about 150 lines of plain Python. Here are the checks that matter most, and why.
 
 ### 1. A closed relation vocabulary
@@ -135,8 +137,8 @@ cd labs && .venv/bin/python -m pytest tests/ -q
 ```
 
 ```
-......................                                                   [100%]
-27 passed in 0.17s
+............................                                             [100%]
+28 passed in 0.13s
 ```
 
 Now read the tests that describe the gate. This one is the hallucination trap:
@@ -175,9 +177,16 @@ Partial acceptance is the right default. All-or-nothing rejection throws away go
 
 1. **Break it on purpose.** Add an edge with `relation: "vibes_with"` and confirm the rejection reason names the relation. Then add it to `ALLOWED_RELATIONS` and watch it pass. Feel how deliberate a schema change should be.
 
-2. **Add a confidence floor.** The `Edge` dataclass already carries `confidence`. Make the gate reject edges below a configurable threshold, and have `ClaudeExtractor` populate it. Then measure how many real edges you lose at 0.9 versus 0.7. There is a real precision/recall trade here and you should see it with your own numbers.
+2. **Add a confidence floor.** The `Edge` dataclass carries `confidence`, but nothing reads it: `validate.py` and `extract.py` do not mention the word, a `confidence: 0.01` edge passes the gate, and `commit` stores the default `1.0` rather than the value you supplied. So this exercise is a full vertical slice, not a one-line threshold. You need four things, and skipping any one leaves you with a control that looks wired and is not:
 
-3. **Add contradiction detection.** If the graph already has an open `works_at` edge for a person and a new episode asserts a different employer with a later `valid_from`, that's a job change, not a conflict: close the old edge instead of writing a parallel one. Currently `pipeline.py` only handles this when the text literally says "left". Make it infer the close.
+   - **Extract it.** Have your extractor emit a real per-edge `confidence` instead of leaving it absent.
+   - **Gate on it.** Reject below a configurable threshold in `validate`, with a rejection reason that names the score, so a dropped edge is explainable.
+   - **Persist it.** Pass the value through `commit` to `add_edge`. This is the step people miss; a threshold that gates correctly and then stores `1.0` has thrown away the evidence for its own decision.
+   - **Test it.** `tests/test_graphlab.py` asserts today's behaviour (unenforced, not persisted) precisely so that wiring it up turns those tests red. Update them in the same commit, and update the Lesson 3 paragraph that tells readers the field enforces nothing.
+
+   Then measure how many real edges you lose at 0.9 versus 0.7. There is a genuine precision/recall trade and you should see it in your own numbers rather than take a threshold on faith.
+
+3. **Add contradiction detection.** If the graph already has an open `works_at` edge for a person and a new episode asserts a different employer with a later `valid_from`, that's a job change, not a conflict: close the old edge instead of writing a parallel one. Today that close only fires when the text literally says "left", and the logic lives in `extract.py` (which emits the close marker) and `ingest.py` (which applies it); `pipeline.py` just calls `ingest_episode`. Make it infer the close from a competing employer instead of waiting for the magic word.
 
 4. **Log rejections to a table.** Persist every rejection with its reason and episode id. That table is the input to Lesson 9's rejection-rate-by-reason metric.
 

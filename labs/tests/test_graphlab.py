@@ -402,3 +402,44 @@ def test_naive_unique_index_would_not_catch_it():
             pass
 
     assert accepted == 5, "NULL != NULL no longer holds; Lesson 3 needs updating"
+
+
+def test_confidence_is_carried_not_enforced():
+    """Lesson 3 states plainly that confidence gates nothing. Hold it to that.
+
+    A field that looks like a safety control but enforces nothing is the
+    failure mode this course keeps naming, so the course says so out loud
+    rather than letting the field's presence imply a guarantee. If someone
+    later wires confidence into the gate (the Lesson 6 exercise), this test
+    fails and Lesson 3's prose must be updated in the same commit.
+    """
+    payload = {
+        "entities": [
+            {"name": "Alice", "type": "person"},
+            {"name": "Northwind", "type": "organization"},
+        ],
+        "edges": [
+            {
+                "source": "Alice",
+                "relation": "works_at",
+                "target": "Northwind",
+                "confidence": 0.01,
+            }
+        ],
+    }
+
+    # The gate does not look at confidence.
+    result = validate(payload)
+    assert len(result.edges) == 1, "confidence now gates validation; update Lesson 3"
+    assert not result.rejected
+
+    # And commit does not preserve the supplied value.
+    g = GraphStore()
+    eid = g.add_episode("test", "Alice works at Northwind.")
+    commit(g, payload, episode_id=eid)
+
+    stored = g.edges_of("Alice")
+    assert len(stored) == 1
+    assert stored[0].confidence == 1.0, (
+        "commit now preserves supplied confidence; Lesson 3 says it does not"
+    )

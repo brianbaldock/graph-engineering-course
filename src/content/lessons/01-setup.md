@@ -32,11 +32,33 @@ Check it works:
 Expected output:
 
 ```
-......................                                                   [100%]
-27 passed in 0.17s
+............................                                             [100%]
+28 passed in 0.13s
 ```
 
 If those tests pass, every lab in this course will run on your machine. Nothing else is required for Parts 1 through 3.
+
+## What you just installed
+
+Worth two minutes now, because later lessons say "open `graphlab/store.py`" without reintroducing it. The whole lab is about 1,200 lines of dependency-free Python:
+
+| File | What it is |
+|---|---|
+| `graphlab/store.py` | The graph itself: SQLite schema, `add_edge`, temporal queries, `subgraph` retrieval. |
+| `graphlab/validate.py` | The validation gate. Hand-written predicates that decide what may enter the graph. |
+| `graphlab/extract.py` | Turns raw text into candidate entities and edges. Regex by default, no API key needed. |
+| `graphlab/ingest.py` | The single ingestion boundary. Both the pipeline and the MCP server go through it. |
+| `graphlab/pipeline.py` | End-to-end run: read episodes, extract, validate, write, report. |
+| `graphlab/policy.py` | Loads `routing_policy.yaml` and enforces the retrieval caps. |
+| `graphlab/sample_data.py` | The five-episode sample corpus, plus known people and aliases. |
+| `mcp_server.py` | Exposes the graph to an agent over MCP, with four policy-bounded tools. |
+| `routing_policy.yaml` | Which model does what, and the caps the code actually enforces. |
+
+One term the rest of the course leans on constantly: an **episode** is one raw source input the graph learned from, stored whole with its own timestamp and never rewritten. A meeting note, a commit message, a document. Edges point back to the episode that produced them, which is what makes a claim auditable rather than a bare assertion. The sample corpus has five of them, which is why the pipeline reports `episodes: 5`.
+
+<div class="callout">
+<strong>You do not need a driver yet.</strong> Parts 1 and 2 are pure Python against SQLite. Copilot CLI or Hermes only becomes necessary at Lesson 5 (model routing) and Lesson 8 (wiring the MCP server to an agent). If the pytest run above is green, your setup is complete for the next four lessons. Install a driver now if you want, but do not read the sections below as blockers.
+</div>
 
 ## Driver A: GitHub Copilot CLI
 
