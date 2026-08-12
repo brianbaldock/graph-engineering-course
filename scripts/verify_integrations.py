@@ -3,13 +3,31 @@
 The GoatCounter failure mode is silent: if Astro bundles the script, the
 data-goatcounter attribute is stripped and you get zero pageviews forever
 with no error. So assert on the built artifact, not on the source.
+
+This script is itself a worked example of the thing Lesson 9 warns about.
+The first version hard-coded an absolute path to one developer's machine.
+On a CI runner that directory did not exist, rglob returned nothing, every
+loop body was skipped, and the step exited 0 while verifying zero pages.
+A guard against silent failure that failed silently. The fix is the empty
+check below: a verifier that finds nothing to check must fail, not pass.
 """
 import pathlib
 import sys
 
-DIST = pathlib.Path("/home/brian/projects/graph-engineering-course/dist")
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+DIST = REPO_ROOT / "dist"
+
+if not DIST.is_dir():
+    sys.exit(f"FAIL: no dist/ at {DIST}. Run `npm run build` first.")
+
 pages = sorted(DIST.rglob("index.html"))
 lesson_pages = [p for p in pages if "/lessons/" in str(p) and p.parent.name != "lessons"]
+
+# Refuse to pass on an empty corpus. This is the check that was missing.
+if not pages:
+    sys.exit(f"FAIL: found no built pages under {DIST}. Nothing was verified.")
+if not lesson_pages:
+    sys.exit(f"FAIL: found no lesson pages under {DIST}. Nothing was verified.")
 
 fails = []
 

@@ -11,6 +11,10 @@ const lessons = defineCollection({
     summary: z.string(),
     minutes: z.number().default(20),
     hands_on: z.boolean().default(false),
+    // Keys into src/data/sources.yaml. Any external factual claim in a
+    // lesson names its source here, and scripts/verify_citations.py fails
+    // the build if the key is unknown or the URL stops resolving.
+    sources: z.array(z.string()).default([]),
   }),
 });
 

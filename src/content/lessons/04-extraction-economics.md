@@ -5,6 +5,8 @@ part: "Part 2 — Building the pipeline"
 summary: "Why ingestion dominates graph-memory cost, and how cached prefixes, low effort, and batching change the bill."
 minutes: 25
 hands_on: true
+sources:
+  - anthropic-prompt-caching
 ---
 
 Graph memory has one killer cost: every episode you ingest triggers extraction. Read the text, find entities, find relationships, attach time, validate it, then write the surviving facts to the graph. If an agent receives thousands of episodes, that work happens thousands of times.
@@ -84,9 +86,9 @@ Batch discounts and prompt caching address different parts of the work, so they 
 
 ## The minimum that decides whether any of this works
 
-Before the arithmetic, the threshold that makes it real. Providers do not cache arbitrarily short prefixes. Anthropic's documented minimum cacheable prompt length is model-specific: 4,096 tokens for Claude Haiku 4.5 and Claude Opus 4.6/4.5, 1,024 for Opus 4.8 and the Sonnet 4.x/5 line, 512 for Opus 5. Below that, marking a block with `cache_control` does nothing at all.
+Before the arithmetic, the threshold that makes it real. Providers do not cache arbitrarily short prefixes. Anthropic's [documented minimum cacheable prompt length](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) is model-specific: 4,096 tokens for Claude Haiku 4.5 and Claude Opus 4.6/4.5, 1,024 for Opus 4.8 and the Sonnet 4.x/5 line, 512 for Opus 5. Below that, marking a block with `cache_control` does nothing at all. We checked that page on 2026-08-12; check it again before you budget, because these numbers move.
 
-The failure is silent. From the docs: "Shorter prompts cannot be cached, even if marked with `cache_control`. Any requests to cache fewer than this number of tokens will be processed without caching, and no error is returned."
+The failure is silent. From [the same page](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): "Shorter prompts cannot be cached, even if marked with `cache_control`. Any requests to cache fewer than this number of tokens will be processed without caching, and no error is returned."
 
 That matters for this lab. `EXTRACTION_SYSTEM` is about 920 characters, on the order of 200 tokens. Against `claude-haiku-4.5` and its 4,096-token minimum, **the lab's own prefix is far too short to cache**, and the API will not tell you. This is the honest state of the shipped code, not a hypothetical.
 

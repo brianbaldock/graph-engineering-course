@@ -1,0 +1,76 @@
+---
+# Verified source registry.
+#
+# Every external factual claim in the lessons points at an entry here.
+# The rule this course holds itself to: if we assert it, we link it, and
+# we record the date we checked it. Anything we could not verify against
+# a primary source does not get asserted.
+#
+# scripts/verify_citations.py fails the build if a lesson cites a key
+# that does not exist here, or if an entry is missing its required fields.
+
+anthropic-prompt-caching:
+  title: "Prompt caching"
+  publisher: "Anthropic"
+  url: "https://platform.claude.com/docs/en/build-with-claude/prompt-caching"
+  checked: "2026-08-12"
+  supports:
+    - "Minimum cacheable prompt length is model-specific: 4,096 tokens for Claude Haiku 4.5 and Opus 4.6/4.5; 1,024 for Opus 4.8 and the Sonnet 4.x/5 line; 512 for Opus 5."
+    - "Prompts below the minimum are processed without caching and no error is returned."
+    - "Default cache lifetime is 5 minutes, refreshed on use; a 1-hour TTL is available at 2x base input price."
+    - "Cache hits are billed at a reduced rate versus base input tokens."
+
+graphiti-mcp-server:
+  title: "Graphiti MCP Server README"
+  publisher: "Zep (getzep/graphiti)"
+  url: "https://github.com/getzep/graphiti/blob/main/mcp_server/README.md"
+  checked: "2026-08-12"
+  supports:
+    - "The Graphiti MCP server ships inside the getzep/graphiti repository under mcp_server/, not as a published package."
+    - "The default database provider is FalkorDB; Neo4j requires explicit selection."
+    - "The documented default LLM model is gpt-5.5."
+    - "The default transport is HTTP at /mcp/, with stdio available for stdio-only clients."
+
+graphiti-mcp-pypi-404:
+  title: "PyPI lookup for the graphiti-mcp package name"
+  publisher: "PyPI"
+  url: "https://pypi.org/pypi/graphiti-mcp/json"
+  checked: "2026-08-12"
+  expect_status: "404"
+  supports:
+    - "There is no published PyPI package named graphiti-mcp; the endpoint returns HTTP 404."
+  reproduce: "curl -s -o /dev/null -w '%{http_code}\\n' https://pypi.org/pypi/graphiti-mcp/json"
+
+mcp-specification:
+  title: "Model Context Protocol specification"
+  publisher: "Anthropic / MCP"
+  url: "https://modelcontextprotocol.io/docs/getting-started/intro"
+  checked: "2026-08-12"
+  supports:
+    - "MCP is an open protocol for exposing tools and resources to model clients over stdio or HTTP."
+
+copilot-cli-docs:
+  title: "GitHub Copilot CLI documentation"
+  publisher: "GitHub"
+  url: "https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli"
+  checked: "2026-08-12"
+  supports:
+    - "Copilot CLI runs agentic sessions from the terminal and supports MCP server registration."
+    - "Model availability depends on plan and organization policy rather than being uniform."
+
+hermes-agent-docs:
+  title: "Hermes Agent documentation"
+  publisher: "Nous Research"
+  url: "https://hermes-agent.nousresearch.com/docs"
+  checked: "2026-08-12"
+  supports:
+    - "Hermes Agent supports MCP servers configured in config.yaml under mcp_servers."
+    - "MCP tools are exposed to the model as mcp__<server>__<tool>."
+
+sqlite-null-uniqueness:
+  title: "SQLite: NULL handling and UNIQUE constraints"
+  publisher: "SQLite"
+  url: "https://www.sqlite.org/nulls.html"
+  checked: "2026-08-12"
+  supports:
+    - "SQLite treats NULL values as distinct from one another in UNIQUE indexes, so multiple rows with a NULL in the unique column are permitted."

@@ -1,0 +1,56 @@
+---
+// The collaboration disclaimer.
+//
+// Shown at the top of every lesson. Brian wrote this course with Hermes,
+// his AI agent, and the honest thing is to say so up front rather than
+// let a reader assume a single human author.
+//
+// Every number in here is measured, not estimated. scripts/verify_collab_stats.py
+// recomputes them from the actual Hermes home directory and fails CI if
+// the published figures drift from reality. That check exists because the
+// first draft of this note said "six months" and the record said three.
+// A course that opens by auditing an unsourced claim does not get to
+// round its own numbers up.
+---
+
+<aside class="collab" aria-label="How this course was made">
+  <p>
+    <strong>Who wrote this.</strong> I'm Brian. I built this course with Hermes,
+    the AI agent I've been running since May 2026, about eleven weeks of daily
+    work at the time of writing. Not "I asked a chatbot to write a course." We
+    built the memory system, hit the pitfalls, fixed them, and wrote down what
+    survived.
+  </p>
+  <p>
+    Most of what's here came out of that: 69 days of working notes, 146 skills
+    written and rewritten as they broke, and a memory architecture we rebuilt
+    more than once because the first designs didn't hold. The temporal
+    close-instead-of-overwrite rule in Lesson 3 exists because we corrupted a
+    graph without it. The verify-by-artifact rule in Lesson 9 exists because a
+    scheduled job reported success for days while doing nothing.
+  </p>
+  <p>
+    Hermes drafted, ran, and broke most of the code here. I set the direction,
+    made the calls, and killed the parts that were wrong. Where we disagreed,
+    the disagreement is usually in the lesson, because that argument is the
+    useful part. Mistakes are mine.
+  </p>
+</aside>
+
+<style>
+  .collab {
+    margin: 0 0 2.5rem;
+    padding: 1.1rem 1.25rem;
+    border-left: 3px solid var(--accent, #6ea8fe);
+    background: var(--surface-2, rgba(255, 255, 255, 0.03));
+    border-radius: 0 6px 6px 0;
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+  .collab p {
+    margin: 0 0 0.75rem;
+  }
+  .collab p:last-child {
+    margin-bottom: 0;
+  }
+</style>

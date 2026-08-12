@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { SITE_TITLE, SITE_DESCRIPTION, REPO_URL, GOATCOUNTER_URL } from '../consts';
+import OtherProjects from '../components/OtherProjects.astro';
 
 interface Props { title?: string; description?: string; }
 const { title, description = SITE_DESCRIPTION } = Astro.props;
@@ -66,8 +67,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
     <footer style="border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--fg-muted);font-size:.87rem">
       <div class="wrap">
-        <p style="margin:0 0 .4rem">
-          Built by Brian Baldock. Code MIT-licensed, prose CC BY 4.0.
+        <OtherProjects />
+        <p style="margin:1.75rem 0 .4rem">
+          Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.
         </p>
         <p style="margin:0">
           This course teaches an architecture, not a marketing claim. See{' '}

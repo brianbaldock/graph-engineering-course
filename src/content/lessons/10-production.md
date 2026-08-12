@@ -5,6 +5,9 @@ part: "Part 4 — Production"
 summary: "When SQLite stops being enough, and the verified Graphiti MCP config the viral article got wrong."
 minutes: 30
 hands_on: true
+sources:
+  - graphiti-mcp-server
+  - graphiti-mcp-pypi-404
 ---
 
 Everything so far ran on SQLite with no server and no API key. That was deliberate: you can't learn an architecture while fighting infrastructure. But there's a point where the toy store stops being appropriate.

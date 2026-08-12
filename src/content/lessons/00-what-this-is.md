@@ -35,6 +35,22 @@ Two distinct things travel under the same name. Both are in this course, and kno
 
 **2. Agentic workflow graphs.** Your agent system is a directed graph of small, single-purpose steps with defined edges, rather than one giant prompt that tries to do everything. Each node is cheap and testable. Routing between them is explicit.
 
+### So what is an "agentic graph"?
+
+The phrase gets thrown around without a definition, which is part of why the hype travels so easily. Here is the one this course uses, and it is the reason both halves above are in the same course:
+
+> An **agentic graph** is the pair: a workflow graph that decides what happens next, and a knowledge graph it reads from and writes to. Neither half is agentic on its own. A workflow graph with no memory is a pipeline that forgets. A knowledge graph with no workflow is a database nobody queries.
+
+What makes it *agentic* is the loop. The agent retrieves from the graph, acts, and writes back what it learned, so the next decision is made against a graph its own earlier decisions shaped. That feedback is the whole thing. It is also why the rest of this course cares so much about validation and time: in a system that reads its own writes, one bad edge is not a bad row, it is a bad belief that gets retrieved and reinforced.
+
+Concretely, in this course:
+
+- The **workflow graph** is Lesson 5 (nodes and routing) and Lesson 7 (which node gets which model).
+- The **knowledge graph** is Lessons 2, 3, and 6 (structure, time, and the gate that guards it).
+- The **loop** is Lesson 8, where MCP lets a real agent read and write the graph on its own.
+
+If you only build one half, you have something useful. You do not have an agentic graph.
+
 They connect: workflow graphs are how you *build* the knowledge graph affordably, and knowledge graphs are what let workflow nodes share state without ballooning context.
 
 ## The one idea that carries the whole course

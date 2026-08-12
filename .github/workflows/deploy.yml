@@ -57,6 +57,19 @@ jobs:
         # is:inline, Astro bundles it, strips data-goatcounter, and pageviews
         # quietly go to zero with no error. Assert on the built HTML.
         run: python3 scripts/verify_integrations.py
+      - name: Verify published test counts match the real suite
+        # Two lessons shipped "15 passed" long after the suite hit 20.
+        # Prose drifts; the suite does not lie. Compare them.
+        run: python3 scripts/verify_test_counts.py
+      - name: Verify every citation still resolves
+        # A citation nobody checks is decoration. Fail the build on a
+        # dead link rather than let the sources section rot.
+        run: python3 scripts/verify_citations.py
+      - name: Verify the collaboration disclaimer's numbers
+        # The note states how long Brian and Hermes have worked together
+        # and how much came out of it. Recompute from the record so the
+        # figures cannot drift upward.
+        run: python3 scripts/verify_collab_stats.py
       - name: Accessibility check
         run: |
           # pa11y-ci drives a pinned puppeteer-core that demands one exact

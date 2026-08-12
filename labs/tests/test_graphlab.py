@@ -257,3 +257,55 @@ def test_policy_clamps_untrusted_retrieval_arguments():
 
     hops, edges = clamp("nonsense", None)
     assert hops >= 1 and edges >= 1
+
+
+# ------------------------------------------- ingestion boundary regressions
+
+def test_close_without_a_date_is_refused_not_duplicated():
+    """A departure with no date must not become a second open edge.
+
+    Regression. The extractor marks a close as {"_close": <date>}. When
+    the text has no date and no occurred_at is supplied, that value is
+    None, and filtering on truthiness let the close fall through to the
+    normal edge list. "Alice left Northwind" was then written as a
+    SECOND open works_at edge, and ingestion reported success. The graph
+    asserted two current employers, which is the exact contradiction the
+    ingestion boundary exists to prevent.
+    """
+    from graphlab.ingest import ingest_episode
+
+    g = GraphStore()
+    g.upsert_entity("Alice", "person")
+    g.upsert_entity("Northwind", "organization")
+    eid = g.add_episode("seed", "Alice works at Northwind.")
+    g.add_edge("Alice", "works_at", "Northwind", valid_from="2020", episode_id=eid)
+
+    _eid, result, closed = ingest_episode(g, "Alice left Northwind.")
+
+    open_employers = [
+        e.target for e in g.edges_of("Alice")
+        if e.relation == "works_at" and e.valid_until is None
+    ]
+    assert open_employers == ["Northwind"], f"duplicate edge created: {open_employers}"
+    assert closed == 0
+    assert any(reason == "close_without_date" for reason, _ in result.rejected), result.rejected
+
+
+def test_dated_close_still_applies():
+    """The happy path must keep working: a dated departure closes the edge."""
+    from graphlab.ingest import ingest_episode
+
+    g = GraphStore()
+    g.upsert_entity("Alice", "person")
+    g.upsert_entity("Northwind", "organization")
+    eid = g.add_episode("seed", "Alice works at Northwind.")
+    g.add_edge("Alice", "works_at", "Northwind", valid_from="2020", episode_id=eid)
+
+    _eid, _result, closed = ingest_episode(g, "Alice left Northwind 2026.")
+
+    assert closed == 1
+    open_employers = [
+        e.target for e in g.edges_of("Alice")
+        if e.relation == "works_at" and e.valid_until is None
+    ]
+    assert open_employers == []

@@ -5,6 +5,9 @@ part: "Part 0 — Orientation"
 summary: "Get one of the two drivers running, plus the lab repo. Ten minutes, no API key."
 minutes: 15
 hands_on: true
+sources:
+  - copilot-cli-docs
+  - hermes-agent-docs
 ---
 
 Pick a driver. You only need one, but the course shows both because they teach different halves of the idea.
@@ -15,7 +18,7 @@ Pick a driver. You only need one, but the course shows both because they teach d
 git clone https://github.com/brianbaldock/graph-engineering-course
 cd graph-engineering-course/labs
 python3 -m venv .venv
-.venv/bin/pip install pytest mcp
+.venv/bin/pip install -r requirements.txt
 ```
 
 Check it works:
@@ -27,11 +30,11 @@ Check it works:
 Expected output:
 
 ```
-...............                                                          [100%]
-15 passed in 0.06s
+......................                                                   [100%]
+22 passed in 0.14s
 ```
 
-If those 15 tests pass, every lab in this course will run on your machine. Nothing else is required for Parts 1 through 3.
+If those tests pass, every lab in this course will run on your machine. Nothing else is required for Parts 1 through 3.
 
 ## Driver A: GitHub Copilot CLI
 
@@ -83,7 +86,7 @@ mcp_servers:
     timeout: 60
 ```
 
-Tools land in the registry as `mcp_{server}_{tool}`, so the four tools you'll build become `mcp_graphlab_search_entities`, `mcp_graphlab_get_subgraph`, `mcp_graphlab_add_knowledge`, and `mcp_graphlab_graph_stats`.
+Tools land in the registry as `mcp__{server}__{tool}` (two underscores on each side of the server name), so the four tools you'll build become `mcp__graphlab__search_entities`, `mcp__graphlab__get_subgraph`, `mcp__graphlab__add_knowledge`, and `mcp__graphlab__graph_stats`.
 
 Two things to know before Lesson 8:
 

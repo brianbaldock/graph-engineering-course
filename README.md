@@ -36,7 +36,7 @@ cd graph-engineering-course/labs
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-.venv/bin/python -m pytest tests/ -q         # 20 passed
+.venv/bin/python -m pytest tests/ -q         # 22 passed
 .venv/bin/python -m graphlab.pipeline        # full pipeline, no API key
 .venv/bin/python -m graphlab.seed memory.db  # seed the graph the MCP lesson uses
 .venv/bin/python verify_mcp.py               # confirm the MCP server behaves

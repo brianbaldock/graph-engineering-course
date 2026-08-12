@@ -129,8 +129,8 @@ cd labs && .venv/bin/python -m pytest tests/ -q
 ```
 
 ```
-...............                                                          [100%]
-15 passed in 0.06s
+......................                                                   [100%]
+22 passed in 0.14s
 ```
 
 Now read the tests that describe the gate. This one is the hallucination trap:

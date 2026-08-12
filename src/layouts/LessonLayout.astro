@@ -1,6 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Comments from '../components/Comments.astro';
+import CollabNote from '../components/CollabNote.astro';
+import Sources from '../components/Sources.astro';
 
 const { entry, prev, next } = Astro.props;
 const d = entry.data;
@@ -16,7 +18,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <h1>{d.title}</h1>
     <p class="muted" style="font-size:1.05rem;margin-top:0">{d.summary}</p>
     <hr />
+    <CollabNote />
     <article><slot /></article>
+
+    <Sources keys={d.sources} />
 
     <nav style="display:flex;justify-content:space-between;gap:1rem;margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:.92rem">
       <span>{prev && <a href={`${base}/lessons/${prev.id}/`}>&larr; {prev.data.title}</a>}</span>

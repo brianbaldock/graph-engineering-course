@@ -37,14 +37,32 @@ def ingest_episode(
     episode_id = store.add_episode(source, text, occurred_at)
     payload = extractor.extract(text, occurred_at)
 
-    closes = [e for e in payload["edges"] if e.get("_close")]
-    payload["edges"] = [e for e in payload["edges"] if not e.get("_close")]
+    # Detect closes by KEY PRESENCE, not truthiness.
+    #
+    # The extractor marks a departure with {"_close": <date>}. When the
+    # text carries no date and the caller passed no occurred_at, that
+    # value is None. Testing `e.get("_close")` then reads falsy, the
+    # close silently falls through to the normal edge list, and
+    # "Alice left Northwind" gets written as a SECOND open works_at
+    # edge. The graph ends up asserting the exact contradiction this
+    # boundary exists to prevent, and reports "accepted" while doing it.
+    closes = [e for e in payload["edges"] if "_close" in e]
+    payload["edges"] = [e for e in payload["edges"] if "_close" not in e]
 
     closed = 0
+    undated_closes = []
     for c in closes:
-        closed += store.invalidate(
-            c["source"], c["relation"], c["target"], c["_close"]
-        )
+        when = c.get("_close")
+        if not when:
+            # No date anywhere: not enough information to bound the fact.
+            # Refuse rather than guess. Writing it as a new open edge is
+            # worse than refusing, and silently dropping it is worse than
+            # saying so.
+            undated_closes.append(f"{c['source']} {c['relation']} {c['target']}")
+            continue
+        closed += store.invalidate(c["source"], c["relation"], c["target"], when)
 
     result = commit(store, payload, episode_id=episode_id)
+    for item in undated_closes:
+        result.rejected.append(("close_without_date", item))
     return episode_id, result, closed

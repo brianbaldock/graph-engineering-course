@@ -1,0 +1,85 @@
+---
+// Renders the verified sources for a lesson.
+//
+// Every external claim in a lesson points at a key in src/data/sources.yaml.
+// scripts/verify_citations.py checks that each key exists, carries a checked
+// date, and that the URL still returns what we say it returns. A citation
+// nobody verifies is decoration, which is the thing this course spends
+// Lesson 0 complaining about.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as yaml from 'js-yaml';
+
+interface Props {
+  keys?: string[];
+}
+
+const { keys = [] } = Astro.props;
+
+const raw = fs.readFileSync(path.resolve('src/data/sources.yaml'), 'utf-8');
+const all = yaml.load(raw) as Record<string, any>;
+
+const cited = keys.map((k) => ({ key: k, ...(all[k] ?? {}) })).filter((s) => s.url);
+---
+
+{cited.length > 0 && (
+  <section class="sources" aria-labelledby="sources-heading">
+    <h2 id="sources-heading">Sources</h2>
+    <p class="sources-note">
+      Every external claim on this page points at one of these. The date is when
+      we last checked it ourselves.
+    </p>
+    <ol>
+      {cited.map((s) => (
+        <li>
+          <a href={s.url} rel="noopener noreferrer">{s.title}</a>
+          <span class="src-pub"> — {s.publisher}</span>
+          <span class="src-date"> (checked {s.checked})</span>
+          {s.supports && (
+            <ul class="src-claims">
+              {s.supports.map((c: string) => <li>{c}</li>)}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+)}
+
+<style>
+  .sources {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border, #2a2a2a);
+  }
+  .sources h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+  }
+  .sources-note {
+    font-size: 0.9rem;
+    color: var(--text-muted, #9a9a9a);
+    margin-bottom: 1rem;
+  }
+  .sources ol {
+    padding-left: 1.2rem;
+  }
+  .sources li {
+    margin-bottom: 0.9rem;
+    line-height: 1.5;
+  }
+  .src-pub,
+  .src-date {
+    color: var(--text-muted, #9a9a9a);
+    font-size: 0.9rem;
+  }
+  .src-claims {
+    margin-top: 0.4rem;
+    padding-left: 1.1rem;
+    font-size: 0.88rem;
+    color: var(--text-muted, #9a9a9a);
+  }
+  .src-claims li {
+    margin-bottom: 0.3rem;
+  }
+</style>

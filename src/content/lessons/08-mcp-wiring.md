@@ -5,6 +5,10 @@ part: "Part 3 — Making it affordable"
 summary: "Expose your graph over MCP so your agent has memory that survives the session. Includes a config from the viral article that does not work."
 minutes: 30
 hands_on: true
+sources:
+  - mcp-specification
+  - hermes-agent-docs
+  - copilot-cli-docs
 ---
 
 Your graph is useless if only your scripts can reach it. This lesson puts it behind an MCP server and wires it into both drivers, so the agent can retrieve memory on demand instead of stuffing the whole history into its context window.
@@ -67,7 +71,8 @@ def get_subgraph(entities: list[str], hops: int = 1, as_of: str = "", max_edges:
     hops:     1 for direct relationships, 2 for transitive. Never more.
     as_of:    optional YYYY[-MM[-DD]] to see the graph as it was then.
     """
-    edges = store.subgraph(entities, hops=min(hops, 2), as_of=as_of or None, max_edges=max_edges)
+    hops, max_edges = clamp(hops, max_edges)   # policy caps, not suggestions
+    edges = store.subgraph(entities, hops=hops, as_of=as_of or None, max_edges=max_edges)
     if not edges:
         return "No edges found. Do not invent relationships; report the gap."
     return render_context(edges)
@@ -75,7 +80,9 @@ def get_subgraph(entities: list[str], hops: int = 1, as_of: str = "", max_edges:
 
 The docstring is the model's instruction manual, so it says "call `search_entities` first" and "never more than 2 hops." And the empty case returns an explicit instruction rather than an empty string, because an empty result is precisely when a model is most tempted to fill the silence from its training data.
 
-The `min(hops, 2)` is the belt to that suspenders. Instructions guide, code enforces.
+The `clamp()` call is the belt to that suspenders. Instructions guide, code enforces.
+
+Note what it bounds: both arguments, not just the obvious one. An earlier version of this lesson clamped `hops` and passed `max_edges` straight through, which meant a model could ask for ten million edges and the docstring was the only thing standing in its way. If you are going to claim code enforces the limit, the code has to enforce every limit you named. The caps themselves live in `routing_policy.yaml` (Lesson 7) so the boundary reads them instead of hard-coding a magic number here.
 
 ## SDK version gotcha
 
@@ -204,10 +211,10 @@ mcp_servers:
 Restart Hermes. At startup it connects, discovers the tools, and registers them as:
 
 ```
-mcp_graphlab_search_entities
-mcp_graphlab_get_subgraph
-mcp_graphlab_add_knowledge
-mcp_graphlab_graph_stats
+mcp__graphlab__search_entities
+mcp__graphlab__get_subgraph
+mcp__graphlab__add_knowledge
+mcp__graphlab__graph_stats
 ```
 
 Those are then injected into every platform toolset, so the graph is available in every conversation without per-session setup. That is the meaningful difference from the Copilot flow: Hermes treats MCP tools as ambient capability rather than something you opt into per invocation.
