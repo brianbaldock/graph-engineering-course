@@ -42,7 +42,10 @@ DB_PATH = os.environ.get("GRAPHLAB_DB") or (sys.argv[1] if len(sys.argv) > 1 els
 
 mcp = _Server("graphlab")
 store = GraphStore(DB_PATH)
-POLICY = load_policy()
+# Strict at startup. A server whose job is to bound an agent should refuse
+# to boot on an unreadable policy rather than quietly serve wider limits
+# than the operator wrote.
+POLICY = load_policy(strict=True)
 
 
 @mcp.tool()

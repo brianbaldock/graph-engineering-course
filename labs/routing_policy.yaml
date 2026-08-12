@@ -21,7 +21,7 @@ ingestion:
   model: claude-haiku-4.5        # cheap: extraction is mechanical parsing
   effort: null                   # Haiku 4.5 rejects --effort. Not all models take it.
   cache_stable_prefix: true      # schema first, episode last, byte-identical
-  batch_for_backfill: true       # historical data is never time-sensitive
+  batch_for_backfill: true       # historical backfill only, not fresh ingestion
   max_output_tokens: 2000
   rules:
     - Keep extraction instructions byte-identical across every request.

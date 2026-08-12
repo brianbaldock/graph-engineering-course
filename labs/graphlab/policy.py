@@ -18,7 +18,17 @@ way Lesson 9 warns about.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+
+class PolicyError(RuntimeError):
+    """Raised when a policy file exists but cannot be trusted.
+
+    Used by strict callers (a server at startup) that would rather refuse
+    to run than serve limits the operator did not write.
+    """
+
 
 DEFAULT_POLICY_PATH = Path(__file__).resolve().parent.parent / "routing_policy.yaml"
 
@@ -27,24 +37,50 @@ DEFAULT_POLICY_PATH = Path(__file__).resolve().parent.parent / "routing_policy.y
 FALLBACK_CAPS = {"max_hops": 2, "max_edges": 60}
 
 
-def load_policy(path: str | Path | None = None) -> dict:
-    """Read the policy file. Returns {} if it cannot be read.
+def load_policy(path: str | Path | None = None, strict: bool = False) -> dict:
+    """Read the policy file.
 
     Resolved relative to this module, not the working directory, because
     an MCP server is launched by an agent from wherever that agent
     happens to be.
+
+    An unreadable or malformed policy is NOT silently treated as "no
+    policy". This file's entire job is to constrain an agent, so a typo
+    in it must not quietly widen the caps. An operator who tightens
+    max_edges to 10 and fat-fingers the YAML would otherwise get the
+    default 60 back with no error and no log line, which is the opposite
+    of what they asked for.
+
+    Failures always warn on stderr. With strict=True they raise, which is
+    what a long-running server should do at startup: refuse to boot
+    rather than serve wider limits than the operator wrote.
     """
     p = Path(path) if path else DEFAULT_POLICY_PATH
+
+    def _fail(reason: str) -> dict:
+        msg = f"policy: {reason} ({p}). Falling back to built-in defaults."
+        if strict:
+            raise PolicyError(msg)
+        print(f"WARNING: {msg}", file=sys.stderr)
+        return {}
+
     try:
         import yaml
     except ImportError:
-        return {}
+        return _fail("PyYAML is not installed, cannot read policy")
     try:
         with open(p, "r", encoding="utf-8") as fh:
             loaded = yaml.safe_load(fh)
-    except (OSError, Exception):
-        return {}
-    return loaded if isinstance(loaded, dict) else {}
+    except OSError as exc:
+        return _fail(f"could not be read: {exc}")
+    except Exception as exc:
+        return _fail(f"is not valid YAML: {exc}")
+
+    if loaded is None:
+        return _fail("is empty")
+    if not isinstance(loaded, dict):
+        return _fail(f"must be a mapping, got {type(loaded).__name__}")
+    return loaded
 
 
 def retrieval_caps(policy: dict | None = None) -> dict:

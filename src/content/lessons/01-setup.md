@@ -33,7 +33,7 @@ Expected output:
 
 ```
 ......................                                                   [100%]
-22 passed in 0.14s
+25 passed in 0.16s
 ```
 
 If those tests pass, every lab in this course will run on your machine. Nothing else is required for Parts 1 through 3.

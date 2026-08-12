@@ -10,6 +10,8 @@ the store. They encode the invariants that matter:
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from graphlab.store import GraphStore, render_context
@@ -309,3 +311,51 @@ def test_dated_close_still_applies():
         if e.relation == "works_at" and e.valid_until is None
     ]
     assert open_employers == []
+
+
+def test_malformed_policy_warns_instead_of_silently_widening(tmp_path, capsys):
+    """A typo in the policy file must not quietly restore looser caps.
+
+    The whole job of routing_policy.yaml is to constrain an agent. An
+    operator who tightens max_edges and fat-fingers the YAML previously
+    got the built-in default back with no error and no log line, which
+    is the opposite of what they asked for. The failure was invisible
+    because the defaults happen to equal the shipped policy.
+    """
+    from graphlab.policy import load_policy
+
+    bad = tmp_path / "routing_policy.yaml"
+    bad.write_text("retrieval: [unclosed\n  bad: :\n")
+
+    result = load_policy(bad)
+
+    assert result == {}
+    err = capsys.readouterr().err
+    assert "WARNING" in err
+    assert "not valid YAML" in err
+
+
+def test_strict_policy_refuses_to_load(tmp_path):
+    """Strict callers raise rather than serve limits the operator did not write."""
+    from graphlab.policy import PolicyError, load_policy
+
+    bad = tmp_path / "routing_policy.yaml"
+    bad.write_text("- this is a list, not a mapping\n")
+
+    with pytest.raises(PolicyError):
+        load_policy(bad, strict=True)
+
+
+def test_policy_rejects_empty_and_wrong_shape(tmp_path, capsys):
+    """Empty and wrong-shaped files are failures, not 'no policy'."""
+    from graphlab.policy import load_policy
+
+    empty = tmp_path / "empty.yaml"
+    empty.write_text("")
+    assert load_policy(empty) == {}
+    assert "is empty" in capsys.readouterr().err
+
+    wrong = tmp_path / "wrong.yaml"
+    wrong.write_text("- a\n- b\n")
+    assert load_policy(wrong) == {}
+    assert "must be a mapping" in capsys.readouterr().err

@@ -38,7 +38,7 @@ ingestion:
   model: claude-haiku-4.5        # cheap: extraction is mechanical parsing
   effort: null                   # Haiku 4.5 rejects --effort. Not all models take it.
   cache_stable_prefix: true      # schema first, episode last, byte-identical
-  batch_for_backfill: true       # historical data is never time-sensitive
+  batch_for_backfill: true       # historical backfill only, not fresh ingestion
   max_output_tokens: 2000
   rules:
     - Keep extraction instructions byte-identical across every request.
@@ -170,6 +170,25 @@ hermes config set model.default claude-haiku-4.5
 ```
 
 Use `hermes config edit` when you want to inspect the resulting configuration. More importantly, do not confuse a global default with enforcement. The wrapper that loads `routing_policy.yaml` remains responsible for choosing traversal separately and for injecting traversal rules into the reasoning prompt.
+
+## What happens when the policy file is broken
+
+Worth stating plainly, because this is where policy files usually betray you. `load_policy` used to swallow every failure and return an empty dict, which meant the built-in fallback caps applied. That sounds harmless. It is not, and the reason is uncomfortable:
+
+```
+malformed YAML  -> {'max_hops': 2, 'max_edges': 60}
+shipped policy  -> {'max_hops': 2, 'max_edges': 60}
+```
+
+The fallback happens to equal the shipped policy, so the failure is *invisible*. An operator who tightens `max_edges` to 10 and fat-fingers the YAML gets 60 back with no error and no log line. The one file whose entire job is to constrain an agent had a fail-open path that silently widened the limits its author had just narrowed.
+
+The lab now warns on stderr for every failure mode (unparseable, empty, wrong shape, missing, PyYAML absent), and `load_policy(strict=True)` raises instead. `mcp_server.py` loads strictly, so a server whose job is bounding an agent refuses to boot rather than serve limits the operator did not write.
+
+Apply the same rule to your own deployment. A config loader that treats "I could not read your rules" as "there are no rules" is worse than having no config file, because it produces false confidence.
+
+<div class="callout">
+<strong>The batching flag has an exception.</strong> <code>batch_for_backfill</code> covers historical import, where nothing is waiting on the result. It does not cover fresh ingestion, and it does not cover an urgent correction. If a fact in your graph is wrong and an agent is acting on it right now, that re-ingestion is time-sensitive: send it on the normal path and record why you took the exception. "Historical data" is a statement about the queue, not about the data's age.
+</div>
 
 ## Hands-on
 
