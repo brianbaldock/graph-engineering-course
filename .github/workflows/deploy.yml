@@ -70,6 +70,12 @@ jobs:
         # A citation nobody checks is decoration. Fail the build on a
         # dead link, an uncited entry, or an empty registry.
         run: python3 scripts/verify_citations.py
+      - name: Verify every CSS token resolves
+        # The first CI run failed pa11y at 2.81:1 because a component used
+        # var(--text-muted, #9a9a9a) and that token is defined nowhere, so
+        # the hardcoded fallback always won and ignored the light theme.
+        # An orphaned token is invisible in review; this makes it loud.
+        run: python3 scripts/verify_css_tokens.py
       - name: Verify lesson prose against the code it describes
         # Added after I published "the validation gate thresholds on
         # confidence" when validate.py never mentions the field. Prose was

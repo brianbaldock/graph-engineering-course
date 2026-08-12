@@ -45,7 +45,7 @@ const projects = [
     font-size: 0.82rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-muted, #9a9a9a);
+    color: var(--fg-muted);
     margin: 0 0 0.8rem;
   }
   .other-projects ul {
@@ -68,7 +68,12 @@ const projects = [
   .blurb {
     display: block;
     font-size: 0.85rem;
-    color: var(--text-muted, #9a9a9a);
+    /* --fg-muted is the site's real token and is redefined per theme.
+       An earlier version referenced a "text-muted" token that is defined
+       nowhere, so its hardcoded grey fallback always won and ignored the
+       theme entirely. It passed on dark (6.15:1) and failed WCAG AA on
+       light (2.64:1), which pa11y caught on the first CI run. */
+    color: var(--fg-muted);
     margin-top: 0.15rem;
   }
 </style>
