@@ -62,6 +62,35 @@ g.add_edge("Alice", "works_at", "Contoso", valid_from="2026-03")
 
 `add_edge()` accepts optional `valid_from`, `valid_until`, `episode_id`, and `confidence`, and returns `False` if the edge would duplicate the store's unique `(source, relation, target, valid_from)` combination. A duplicate is not a reason to erase or mutate prior evidence.
 
+Two of those fields are doing work worth naming. `episode_id` is the provenance pointer from Lesson 2: it is what lets `cite()` show which raw input asserted this edge, and it is the difference between an auditable claim and a bare assertion. `confidence` is a float the extractor sets and the validation gate in Lesson 6 thresholds on. Neither is decoration; an edge without provenance cannot be audited, and an edge without confidence cannot be filtered.
+
+### The uniqueness constraint has a sharp edge
+
+The obvious way to write that constraint is wrong, and it fails silently:
+
+```sql
+-- Looks right. Is not.
+CREATE UNIQUE INDEX idx ON edges (source, relation, target, valid_from);
+```
+
+In SQL, `NULL` is not equal to `NULL`. Two rows with a NULL `valid_from` are not duplicates as far as a unique index is concerned, so an undated edge can be inserted over and over:
+
+```
+naive UNIQUE(...valid_from):     5 identical undated edges accepted
+lab COALESCE(valid_from, ''):    1 identical undated edge accepted
+```
+
+Undated edges are exactly the ones you get most often, because plenty of source text asserts a fact without a date. A naive index means every re-ingestion of the same document silently multiplies them. Nothing errors. The graph just quietly accumulates five copies of the same belief, and any confidence or count you compute from it is now wrong.
+
+The lab's schema closes it by indexing on a coalesced expression, so all undated edges collapse onto the same key:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_edges_identity
+    ON edges (source, relation, target, COALESCE(valid_from, ''));
+```
+
+Verify it yourself. `add_edge` on the same undated fact five times returns `[True, False, False, False, False]`, and the store holds one edge.
+
 ## A query is always about a time
 
 Both `g.edges_of(name, as_of=None)` and `g.subgraph(seeds, hops=1, as_of=None, max_edges=60)` can take an `as_of` point. With no `as_of`, they return edges regardless of whether they are historical. With it, the store applies this rule:

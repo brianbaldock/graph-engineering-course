@@ -359,3 +359,46 @@ def test_policy_rejects_empty_and_wrong_shape(tmp_path, capsys):
     wrong.write_text("- a\n- b\n")
     assert load_policy(wrong) == {}
     assert "must be a mapping" in capsys.readouterr().err
+
+
+def test_undated_duplicate_edges_collapse():
+    """The COALESCE index is load-bearing, not decorative.
+
+    SQL treats NULL != NULL, so a naive
+    UNIQUE(source, relation, target, valid_from) lets unlimited copies of
+    the SAME undated edge in. Undated edges are the common case, because
+    plenty of source text asserts a fact without a date, so a naive index
+    means every re-ingestion silently multiplies beliefs. Lesson 3 teaches
+    this; if the index is ever weakened, that lesson becomes wrong.
+    """
+    g = GraphStore()
+    g.upsert_entity("Alice", "person")
+    g.upsert_entity("Northwind", "organization")
+
+    results = [g.add_edge("Alice", "works_at", "Northwind") for _ in range(5)]
+
+    assert results == [True, False, False, False, False]
+    assert len(g.edges_of("Alice")) == 1
+
+
+def test_naive_unique_index_would_not_catch_it():
+    """Demonstrate the bug the COALESCE index exists to prevent.
+
+    Guards the lesson's claim rather than the lab's code: if SQLite ever
+    changed this behaviour, the published explanation would be wrong.
+    """
+    import sqlite3
+
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE e (s TEXT, r TEXT, t TEXT, vf TEXT)")
+    conn.execute("CREATE UNIQUE INDEX idx ON e (s, r, t, vf)")
+
+    accepted = 0
+    for _ in range(5):
+        try:
+            conn.execute("INSERT INTO e VALUES ('A','works_at','N',NULL)")
+            accepted += 1
+        except sqlite3.IntegrityError:
+            pass
+
+    assert accepted == 5, "NULL != NULL no longer holds; Lesson 3 needs updating"

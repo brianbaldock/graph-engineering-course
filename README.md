@@ -36,7 +36,7 @@ cd graph-engineering-course/labs
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-.venv/bin/python -m pytest tests/ -q         # 25 passed
+.venv/bin/python -m pytest tests/ -q         # 27 passed
 .venv/bin/python -m graphlab.pipeline        # full pipeline, no API key
 .venv/bin/python -m graphlab.seed memory.db  # seed the graph the MCP lesson uses
 .venv/bin/python verify_mcp.py               # confirm the MCP server behaves
@@ -57,7 +57,7 @@ No API key, no database server, no cloud account for Parts 1 through 3.
 | `graphlab/seed.py` | Wipe-and-rebuild the demo graph used by the MCP lesson. |
 | `mcp_server.py` | Exposes the graph over MCP to Hermes and Copilot CLI. |
 | `routing_policy.yaml` | The routing policy. Its header states exactly which keys are enforced and which are operator policy. |
-| `tests/` | 25 tests covering the gate, temporal queries, retrieval bounds, the MCP close regression, and fail-closed policy loading. |
+| `tests/` | 27 tests covering the gate, temporal queries, retrieval bounds, the MCP close regression, and fail-closed policy loading. |
 
 ## Authorship
 
