@@ -11,6 +11,8 @@ Every number in your architecture that you did not measure is decoration. That i
 
 This lesson gives those claims a measurement procedure. The goal is not a dashboard full of numbers. The goal is to discover which part of the pipeline is lying to you before it becomes expensive or permanent.
 
+Why this matters more in an agentic graph than in a normal database: the agent's writes become its own future evidence. A gate that quietly stopped rejecting anything does not announce itself. It compounds, and by the time answers are visibly wrong you cannot tell which retrievals were poisoned.
+
 ## The metrics worth keeping
 
 | Metric | Calculation | What it tells you |

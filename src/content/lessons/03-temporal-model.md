@@ -5,6 +5,8 @@ part: "Part 1 — Foundations"
 summary: "Put time on relationships, preserve expired facts, and answer questions about the world as it was."
 minutes: 25
 hands_on: true
+sources:
+  - sqlite-null-uniqueness
 ---
 
 A normal knowledge graph stores a statement like this:

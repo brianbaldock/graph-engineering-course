@@ -9,6 +9,12 @@ hands_on: true
 
 If you only implement one thing from this course, implement this.
 
+## Why this is the agentic part
+
+It would be easy to read this lesson as database hygiene. It isn't. Validation only becomes urgent once the agent is writing to the graph on its own, which is the loop Lesson 0 defined: retrieve, act, write back, retrieve again.
+
+A human-curated graph gets bad rows. An agentic graph gets bad *beliefs*, because the thing that wrote the edge is the same thing that will later retrieve it and treat it as established fact. Nobody is between the write and the next read. That is the whole reason the gate has to live in code rather than in a prompt asking the model to be careful.
+
 ## Why a bad edge is worse than a bad chunk
 
 In a vector store, a bad chunk is inert. It surfaces occasionally, the model reads it, maybe it produces a wrong answer once. The damage is bounded by that single retrieval.

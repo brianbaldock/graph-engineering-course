@@ -33,7 +33,7 @@ const cited = keys.map((k) => ({ key: k, ...(all[k] ?? {}) })).filter((s) => s.u
       {cited.map((s) => (
         <li>
           <a href={s.url} rel="noopener noreferrer">{s.title}</a>
-          <span class="src-pub"> — {s.publisher}</span>
+          <span class="src-pub">, {s.publisher}</span>
           <span class="src-date"> (checked {s.checked})</span>
           {s.supports && (
             <ul class="src-claims">

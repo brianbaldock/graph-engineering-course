@@ -52,6 +52,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx astro check
+      - name: Install Python deps for the verification gates
+        # verify_citations and verify_test_counts both need real packages.
+        # Without this the gates crash on the runner instead of checking
+        # anything, which is the failure mode this course keeps warning about.
+        run: pip install -r labs/requirements.txt
       - name: Verify analytics and feedback shipped
         # The GoatCounter failure mode is silent: if the script ever loses
         # is:inline, Astro bundles it, strips data-goatcounter, and pageviews
@@ -63,7 +68,7 @@ jobs:
         run: python3 scripts/verify_test_counts.py
       - name: Verify every citation still resolves
         # A citation nobody checks is decoration. Fail the build on a
-        # dead link rather than let the sources section rot.
+        # dead link, an uncited entry, or an empty registry.
         run: python3 scripts/verify_citations.py
       - name: Verify the collaboration disclaimer's numbers
         # The note states how long Brian and Hermes have worked together

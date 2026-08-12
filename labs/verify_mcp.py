@@ -13,6 +13,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+
+def store_edge_count(srv, name):
+    """Edges around an entity, read straight from the store.
+
+    Deliberately bypasses get_subgraph: this is the unclamped ground truth
+    the endpoint's output gets compared against.
+    """
+    return len(srv.store.edges_of(name))
+
+
 with tempfile.TemporaryDirectory() as tmp:
     os.environ["GRAPHLAB_DB"] = str(Path(tmp) / "verify.db")
     import mcp_server as srv
@@ -52,15 +62,34 @@ with tempfile.TemporaryDirectory() as tmp:
     assert got_hops == caps["max_hops"], f"hops not clamped: {got_hops} != {caps['max_hops']}"
     assert got_edges == caps["max_edges"], f"max_edges not clamped: {got_edges} != {caps['max_edges']}"
 
+    # Proving clamp() works is not the same as proving the ENDPOINT uses it.
+    # An earlier version of this check only exercised the helper, so removing
+    # the clamp call from get_subgraph left the verifier green.
+    #
+    # To assert on the endpoint we need a graph big enough that the cap
+    # actually binds: more than max_edges edges within reach of one hop.
+    # Otherwise both the clamped and unclamped calls return the same handful
+    # of rows and the check proves nothing.
+    n_peers = caps["max_edges"] + 20
+    for i in range(n_peers):
+        srv.add_knowledge(f"Alice uses Service{i:03d}.", "verify", "2026-05-01")
+
+    unbounded = store_edge_count(srv, "Alice")
+    assert unbounded > caps["max_edges"], (
+        f"test graph has only {unbounded} edges around Alice; it must exceed "
+        f"the {caps['max_edges']} cap or this assertion cannot detect anything"
+    )
+
     wide = srv.get_subgraph(["Alice"], hops=asked_hops, max_edges=asked_edges)
-    edge_lines = [ln for ln in wide.splitlines() if "--" in ln and "-->" in ln]
+    edge_lines = [ln for ln in wide.splitlines() if "-->" in ln]
     assert len(edge_lines) <= caps["max_edges"], (
-        f"returned {len(edge_lines)} edges, above the {caps['max_edges']} cap"
+        f"endpoint returned {len(edge_lines)} edges against a {caps['max_edges']} "
+        f"cap: the clamp is not wired into get_subgraph"
     )
     print(
-        f"retrieval clamped by artifact: asked hops={asked_hops} edges={asked_edges}, "
-        f"policy allows hops={caps['max_hops']} edges={caps['max_edges']}, "
-        f"got {len(edge_lines)} edge(s)"
+        f"retrieval clamped by artifact: {unbounded} edges exist around Alice, "
+        f"asked for {asked_edges} at {asked_hops} hops, "
+        f"endpoint returned {len(edge_lines)} (cap {caps['max_edges']})"
     )
 
     print("\nOK: MCP server loads, enforces policy caps, and closes expired facts.")

@@ -21,6 +21,13 @@ r = subprocess.run(
     [str(PY), "-m", "pytest", "tests/", "-q"],
     cwd=LABS, capture_output=True, text=True,
 )
+# A failing suite must not silently become the new "truth". If pytest exits
+# non-zero, the count it printed is not something to sync prose against.
+if r.returncode != 0:
+    print(f"pytest exited {r.returncode}; refusing to validate counts against a failing suite.")
+    print(r.stdout[-1200:])
+    sys.exit(1)
+
 m = re.search(r"(\d+) passed", r.stdout)
 if not m:
     print("could not determine the real test count:")
@@ -30,16 +37,31 @@ actual = int(m.group(1))
 print(f"actual suite: {actual} passed")
 
 targets = list((ROOT / "src/content/lessons").glob("*.md")) + [ROOT / "README.md"]
+if not targets:
+    sys.exit("FAIL: no lessons or README found. Nothing was verified.")
+
+# Every way the prose might state a count. The first version of this script
+# checked two patterns and reported success while "all 20 tests" sat stale in
+# the wrap-up lesson.
+PATTERNS = [
+    r"(\d+) passed",
+    r"those (\d+) tests",
+    r"all (\d+) tests",
+    r"(\d+) tests pass",
+    r"(\d+) passing tests",
+    r"suite of (\d+)",
+    r"(\d+) tests in",
+]
+
 fails = []
 for f in targets:
     text = f.read_text()
-    for claimed in re.findall(r"(\d+) passed", text):
-        if int(claimed) != actual:
-            fails.append(f"{f.relative_to(ROOT)}: publishes '{claimed} passed', actual is {actual}")
-    # also catch prose like "those 15 tests"
-    for claimed in re.findall(r"those (\d+) tests", text):
-        if int(claimed) != actual:
-            fails.append(f"{f.relative_to(ROOT)}: prose says 'those {claimed} tests', actual is {actual}")
+    for pat in PATTERNS:
+        for claimed in re.findall(pat, text):
+            if int(claimed) != actual:
+                fails.append(
+                    f"{f.relative_to(ROOT)}: claims '{claimed}' via /{pat}/, actual is {actual}"
+                )
 
 if fails:
     print("\nPUBLISHED TEST COUNTS OUT OF DATE:")

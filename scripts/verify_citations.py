@@ -16,6 +16,12 @@ SOURCES = ROOT / "src/data/sources.yaml"
 data = yaml.safe_load(SOURCES.read_text())
 REQUIRED = ("title", "publisher", "url", "checked", "supports")
 
+# A verifier that passes on an empty corpus verifies nothing. Same class of
+# bug as the one that made verify_integrations.py green on CI while checking
+# zero pages. Refuse to succeed with nothing to check.
+if not data:
+    sys.exit("FAIL: sources.yaml is empty. Nothing was verified.")
+
 fails = []
 for key, entry in data.items():
     for field in REQUIRED:
@@ -23,6 +29,36 @@ for key, entry in data.items():
             fails.append(f"{key}: missing required field '{field}'")
     if not entry.get("supports"):
         fails.append(f"{key}: 'supports' is empty; a source with no claim is decoration")
+    # A checked date that is not a date is not a checked date.
+    checked = str(entry.get("checked", ""))
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):
+        fails.append(f"{key}: 'checked' must be YYYY-MM-DD, got {checked!r}")
+
+# Every key a lesson cites must exist here, and every entry here should be
+# cited by something. An unreferenced registry is decoration too.
+LESSONS = ROOT / "src/content/lessons"
+cited = set()
+for f in sorted(LESSONS.glob("*.md")):
+    fm = f.read_text().split("---")
+    if len(fm) < 2:
+        continue
+    block = re.search(r"^sources:\s*\n((?:\s*-\s*\S+\n)+)", fm[1], re.M)
+    if not block:
+        continue
+    for key in re.findall(r"-\s*(\S+)", block.group(1)):
+        cited.add(key)
+        if key not in data:
+            fails.append(f"{f.name} cites unknown source key '{key}'")
+
+orphans = set(data) - cited
+if orphans:
+    for o in sorted(orphans):
+        fails.append(f"{o}: in the registry but no lesson cites it")
+
+if not cited:
+    fails.append("no lesson cites any source; the registry is decorative")
+
+print(f"{len(data)} sources, {len(cited)} cited by lessons")
 
 if fails:
     print("SCHEMA FAILURES:")
