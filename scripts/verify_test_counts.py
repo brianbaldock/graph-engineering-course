@@ -40,27 +40,44 @@ targets = list((ROOT / "src/content/lessons").glob("*.md")) + [ROOT / "README.md
 if not targets:
     sys.exit("FAIL: no lessons or README found. Nothing was verified.")
 
-# Every way the prose might state a count. The first version of this script
-# checked two patterns and reported success while "all 20 tests" sat stale in
-# the wrap-up lesson.
-PATTERNS = [
-    r"(\d+) passed",
-    r"those (\d+) tests",
-    r"all (\d+) tests",
-    r"(\d+) tests pass",
-    r"(\d+) passing tests",
-    r"suite of (\d+)",
-    r"(\d+) tests in",
-]
+# Any number sitting next to the word "test", plus pytest's own summary line.
+#
+# The first version of this script listed specific phrasings and kept
+# missing new ones: it passed while "15 passing tests" sat in Lesson 11 and
+# "20 tests" sat in the README. Guessing at phrasings is the wrong shape for
+# this check. Match structurally instead and let the exclusions below carve
+# out the numbers that legitimately are not suite totals.
+COUNT_NEAR_TEST = re.compile(
+    r"(?<![\w.])(\d{1,4})\s+(?:\w+\s+){0,2}?tests?\b"   # "22 tests", "15 passing tests"
+    r"|(?<![\w.])(\d{1,4})\s+passed\b"                   # "22 passed", incl. pytest output
+    r"|suite of\s+(\d{1,4})\b",                          # "a suite of 19"
+    re.I,
+)
+
+# Numbers near "test" that are NOT the suite total. Anything matching these
+# is skipped rather than reported.
+#
+# Deliberately narrow. An earlier draft excluded any line containing a
+# duration, which silently swallowed pytest's own "7 passed in 0.10s" and
+# reopened the exact hole this script exists to close.
+NOT_A_SUITE_TOTAL = re.compile(
+    r"\b(?:python|astro|node|version|v)\s*\d+\.\d"  # "Python 3.10 for the tests"
+    r"|\btest\s*\d+\b",                             # "test 3"
+    re.I,
+)
 
 fails = []
 for f in targets:
     text = f.read_text()
-    for pat in PATTERNS:
-        for claimed in re.findall(pat, text):
-            if int(claimed) != actual:
+    for line_no, line in enumerate(text.splitlines(), 1):
+        if NOT_A_SUITE_TOTAL.search(line):
+            continue
+        for m in COUNT_NEAR_TEST.finditer(line):
+            claimed = int(m.group(1) or m.group(2) or m.group(3))
+            if claimed != actual:
                 fails.append(
-                    f"{f.relative_to(ROOT)}: claims '{claimed}' via /{pat}/, actual is {actual}"
+                    f"{f.relative_to(ROOT)}:{line_no}: claims '{m.group(0).strip()}', "
+                    f"actual suite is {actual}"
                 )
 
 if fails:

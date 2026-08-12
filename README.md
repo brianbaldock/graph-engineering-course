@@ -57,7 +57,7 @@ No API key, no database server, no cloud account for Parts 1 through 3.
 | `graphlab/seed.py` | Wipe-and-rebuild the demo graph used by the MCP lesson. |
 | `mcp_server.py` | Exposes the graph over MCP to Hermes and Copilot CLI. |
 | `routing_policy.yaml` | The routing policy. Its header states exactly which keys are enforced and which are operator policy. |
-| `tests/` | 20 tests covering the gate, temporal queries, retrieval bounds, and the MCP close regression. |
+| `tests/` | 22 tests covering the gate, temporal queries, retrieval bounds, and the MCP close regression. |
 
 ## Authorship
 
