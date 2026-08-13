@@ -52,37 +52,97 @@ def pipeline_owns_close_logic() -> bool:
 
 
 # (claim regex, human description, predicate that must be TRUE to allow it)
+#
+# Match STRUCTURALLY, not by enumerating phrasings. The first version of this
+# gate listed the exact sentence that had already been wrong once, so dropping
+# three words from it walked straight through: a sabotage probe found only 2 of
+# 8 natural phrasings caught. The list of guessed phrasings WAS the bug.
+#
+# But structure alone over-fires. A first structural draft flagged six lines of
+# legitimate prose, including the Lesson 6 exercise that explicitly says nothing
+# reads confidence and the Lesson 7 "enforced versus documented" disclaimer.
+# Flagging the sentence that CORRECTS the misconception is the classic trap.
+#
+# So: assert an ACTIVE claim (the gate does threshold on confidence, in the
+# present indicative, close together), then exclude hypotheticals ("a gate can
+# enforce ... a confidence threshold"), exercise framing ("add a confidence
+# floor"), demonstration output, and explicit disclaimers.
+_ACTOR = r"(?:gate|validat\w+|extractor|commit\b|store\b|persist\w*)"
+_ENFORCE = (r"(?:thresholds?\s+on|thresholds?\b|enforc\w+|rejects?\w*|filters?\w*"
+            r"|discard\w*|drops?\b|prunes?\b|checks?\b|stricter|cutoff|floor"
+            r"|never\s+reach\w*|does\s+not\s+reach)")
+
+# Proximity model: the line mentions confidence, AND an actor, AND an enforcement
+# verb, all within a bounded window of the word "confidence". Word order varies
+# too much in natural prose to enumerate, but co-occurrence in a tight window is
+# a reliable signal, and the window is what keeps unrelated uses of "confidence"
+# (Lesson 2's "act on with full confidence") from matching.
+_W = 80
+_CLAIM_CONFIDENCE = (
+    rf"confidence.{{0,{_W}}}{_ACTOR}"
+    rf"|{_ACTOR}.{{0,{_W}}}confidence"
+)
+# Second condition applied in code below: an enforcement verb must also appear
+# within the window. Encoded as a companion regex so both must hold.
+_CONFIDENCE_ENFORCE_NEAR = re.compile(
+    rf"confidence.{{0,{_W}}}{_ENFORCE}|{_ENFORCE}.{{0,{_W}}}confidence", re.I
+)
+
+# Narrow carve-outs. Each one exists because a real line of honest prose tripped
+# the detector. Keep this list specific; an over-broad exclusion disarms the gate.
+_DISCLAIM = re.compile(
+    # explicit statements that it is NOT wired
+    r"not (?:enforced|read|used|checked)|never (?:reads?|enforced|used|checked)"
+    r"|nothing reads it|do not mention|enforces nothing"
+    r"|looks like a (?:safety )?control|does not (?:read|enforce|gate|threshold)"
+    r"|stores the default|the value you (?:passed|supplied) is not"
+    # hypothetical / capability framing, not a claim about this lab
+    r"|\bcan enforce\b|\bcould\b|\bwould\b|\bmay\b|\bshould\b"
+    # exercise framing: telling the reader to BUILD it
+    r"|\*\*Add a|Add a confidence|this exercise|you need four things"
+    # demonstration output showing non-enforcement
+    r"|accepted_edges=|passes the gate",
+    re.I,
+)
+
 CLAIMS = [
     (
-        r"gate in Lesson 6 thresholds on|gate thresholds on .{0,20}confidence"
-        r"|confidence.{0,40}(is enforced|gates|rejects)",
+        _CLAIM_CONFIDENCE,
         "prose says confidence is enforced by the gate",
         code_reads_confidence,
+        _CONFIDENCE_ENFORCE_NEAR,
     ),
     (
         r"(uses|via|with|through) (a )?JSON Schema (library|dependency|package)"
         r"|validated (against|with) (a )?JSON Schema",
         "prose implies a real JSON Schema dependency",
         code_uses_jsonschema,
+        None,
     ),
     (
         r"`?pipeline\.py`? only handles this when",
         "prose attributes close-marker logic to pipeline.py",
         pipeline_owns_close_logic,
+        None,
     ),
 ]
 
 fails = []
-for pattern, description, predicate in CLAIMS:
+for pattern, description, predicate, also_required in CLAIMS:
     supported = predicate()
     rx = re.compile(pattern, re.I)
     for lesson in sorted(LESSONS.glob("*.md")):
         for n, line in enumerate(lesson.read_text().splitlines(), 1):
-            if rx.search(line) and not supported:
-                fails.append(
-                    f"{lesson.name}:{n}: {description}, but the code does not.\n"
-                    f"    {line.strip()[:110]}"
-                )
+            if not rx.search(line) or supported:
+                continue
+            if also_required is not None and not also_required.search(line):
+                continue
+            if _DISCLAIM.search(line):
+                continue
+            fails.append(
+                f"{lesson.name}:{n}: {description}, but the code does not.\n"
+                f"    {line.strip()[:110]}"
+            )
 
 if fails:
     print("UNSUPPORTED CLAIMS IN LESSON PROSE:")

@@ -11,12 +11,20 @@ import re
 import sys
 from pathlib import Path
 
-SRC = Path("/home/brian/projects/graph-engineering-course/src")
+SRC = Path(__file__).resolve().parent.parent / "src"
+
+if not SRC.is_dir():
+    sys.exit(f"FAIL: no source tree at {SRC}. Nothing was verified.")
 
 defined = set()
 used = {}
 
-for f in list(SRC.rglob("*.astro")) + list(SRC.rglob("*.css")):
+files = list(SRC.rglob("*.astro")) + list(SRC.rglob("*.css"))
+if not files:
+    sys.exit(f"FAIL: scanned {SRC} and found no .astro or .css files. "
+             "A verifier that checks nothing must not report success.")
+
+for f in files:
     text = f.read_text()
     for m in re.finditer(r"(--[\w-]+)\s*:", text):
         defined.add(m.group(1))
