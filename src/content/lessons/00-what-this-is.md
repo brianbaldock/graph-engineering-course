@@ -5,22 +5,29 @@ part: "Part 0 — Orientation"
 summary: "The honest version of the graph engineering pitch, minus the hype that got it trending."
 minutes: 10
 hands_on: false
+sources:
+  - viral-claim-original
+  - viral-claim-top-reply
+  - viral-claim-variant-70
+  - anthropic-claude-code-keynote
 ---
 
 You probably got here from a post that looked something like this:
 
-> "Anthropic engineer: 90% of our engineers were using self-improving loops. Now everyone shifted to building agentic Graphs. No more prompting."
+> "Anthropic engineer: 90% of our engineers were using self‑improving loops. Now everyone shifted to building agentic Graphs" "No more prompting."
 
-Let's deal with that first, because starting a course on a false premise is a bad way to learn anything.
+That is [a real post](https://x.com/zodchiii/status/2083134599832408208), from 31 July 2026, and it is quoted here verbatim rather than paraphrased. Let's deal with it first, because starting a course on a false premise is a bad way to learn anything.
 
 ## The hype, audited
 
-That post went viral in several variants, with the engineer percentage swapped between 70% and 90%, the timeline between "3-6 months" and "4-6 months," and the attached video described as a graph lecture. The top reply pointed out the video was not about graphs. It was the Claude Code release demo.
+That post went viral in several variants. The engineer percentage was stated as [70%](https://x.com/zachtratar/status/2081530269044298084) in some retellings and 90% in others, with 80% and 85% also in circulation; the timeline moved between "3-6 months" and "4-6 months"; and the attached video was described as a graph lecture. [The top reply](https://x.com/echantech1/status/2083239341766406291) pointed out that the video was not about graphs.
+
+It is [Cat Wu's Claude Code demo](https://www.youtube.com/watch?v=5nmVr9_CuJg) from Anthropic's Code with Claude developer conference on 22 May 2025. It runs 10:56, which is where the "in just 10 minutes" framing comes from, and it covers Claude Code's general availability, the Claude 4 models, GitHub Actions and the IDE extensions. Graphs are not in it.
 
 So:
 
 - **"No more prompting" is false.** Every node in an agentic graph is a prompt. Graph engineering doesn't remove prompting, it *demotes* it from the whole job to one component of a system. That's a real shift. It is not the abolition of prompting.
-- **The percentages are unsourced.** No named engineer, no talk, no citation. Treat them as decoration.
+- **The percentages are unsourced.** No named engineer, no talk, no citation. A number that arrives as 70, then 80, then 85, then 90 without anyone adding a source is not a measurement, it is decoration.
 - **The architecture underneath is real and worth learning.** That's what this course keeps.
 
 <div class="callout">

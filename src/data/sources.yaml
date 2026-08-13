@@ -92,3 +92,54 @@ sqlite-null-uniqueness:
   checked: "2026-08-12"
   supports:
     - "SQLite treats NULL values as distinct from one another in UNIQUE indexes, so multiple rows with a NULL in the unique column are permitted."
+
+# --- The viral claim this course audits ------------------------------------
+# Lesson 0 opens by auditing a specific post. A course whose first move is
+# "these percentages are unsourced" does not get to make its own unsourced
+# assertions about what the post said, how it varied, or what the video was.
+# These four entries are the evidence for that audit.
+#
+# Note on durability: social posts get deleted. These resolved 200 on the
+# checked date, and the Wayback snapshot below is the fallback if a primary
+# disappears. If one starts 404ing, that is itself worth reporting in the
+# lesson rather than quietly swapping the link.
+
+viral-claim-original:
+  title: "\"Anthropic engineer: 90% of our engineers were using self-improving loops...\""
+  publisher: "@zodchiii on X, 31 July 2026"
+  url: "https://x.com/zodchiii/status/2083134599832408208"
+  checked: "2026-08-13"
+  supports:
+    - "The viral post quotes an unnamed \"Anthropic engineer\" saying 90% of engineers were using self-improving loops and that everyone shifted to building agentic Graphs."
+    - "The post asserts \"No more prompting.\""
+    - "The post attributes the content to a 10-minute live Claude Code build from a blank terminal."
+    - "No named engineer, talk, or citation is given for the percentage."
+
+viral-claim-top-reply:
+  title: "Top reply: \"This is not a video on graphs\""
+  publisher: "@echantech1 on X, 31 July 2026"
+  url: "https://x.com/echantech1/status/2083239341766406291"
+  checked: "2026-08-13"
+  supports:
+    - "The top reply to the viral post states the attached video is not about graphs and is the original Claude release video."
+
+viral-claim-variant-70:
+  title: "Variant citing 70% and a 3-6 month timeline"
+  publisher: "@zachtratar on X"
+  url: "https://x.com/zachtratar/status/2081530269044298084"
+  checked: "2026-08-13"
+  supports:
+    - "The same claim circulated with the engineer percentage stated as 70% rather than 90%."
+    - "Variants attach a \"in 3-6 months, we'll all be building graphs\" timeline."
+    - "The quoted percentage drifted across retellings (70%, 80%, 85%, 90%), which is the signature of an unsourced number."
+
+anthropic-claude-code-keynote:
+  title: "Anthropic Code with Claude Keynote: Cat Wu Demo"
+  publisher: "Anthropic / Code with Claude conference, 22 May 2025"
+  url: "https://www.youtube.com/watch?v=5nmVr9_CuJg"
+  checked: "2026-08-13"
+  supports:
+    - "The video attached to the viral post is Cat Wu's Claude Code demo from Anthropic's Code with Claude developer conference on 22 May 2025."
+    - "The demo is about Claude Code general availability, Claude 4 models, GitHub Actions and IDE extensions. It does not present graph engineering."
+    - "The video runs 10:56, which is the source of the \"10 minutes\" framing in the viral post."
+
