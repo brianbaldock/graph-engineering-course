@@ -1,30 +1,33 @@
 #!/usr/bin/env python3
 """Report lesson length, split by prose versus fenced code and frontmatter.
 
-This is a REPORT, not a gate. It never fails the build.
+This is a REPORT. It has no thresholds, no verdicts, and never fails the
+build. It exists so a length change is visible in a CI log, not so anything
+gets cut to hit a number.
 
-History worth knowing before you act on these numbers. The 900-1400 range
-started life as a drafting hint in a subagent prompt ("900-1400 words each,
-substance over padding") to stop generated lessons padding. It was never a
-publishing standard, and it appears nowhere on the site. It later got
-treated as a hard target, and a round of edits cut real explanatory
-material out of Lesson 0 to hit it, including the sentence that explained
-how the two halves of the course connect.
+History, because the number mattered more than it should have. A "900-1400
+words" range started life as a drafting hint inside a subagent prompt, meant
+to stop generated drafts padding. Nobody asked for it, it appeared nowhere on
+the published site, and its CI step never failed the build. It still got
+treated as a standard: a round of edits cut real explanatory material out of
+Lesson 0 to satisfy it, including the sentence connecting the two halves of
+the course.
 
-So: a lesson over the range is a prompt to re-read it, not an instruction
-to cut. Clarity wins over the number every time. If a lesson is long
-because it earns the length, leave it alone.
+Brian retired it explicitly on 2026-08-14: the limit was fabricated for an
+unrelated purpose and should not constrain future work. So the thresholds are
+gone rather than merely widened. A lesson is as long as it earns.
 
-Counting fenced code against the range penalises exactly the lessons that
-show their work, which is why prose and code are reported separately.
+Prose and fenced code are still counted separately, because counting code
+against a length figure penalises exactly the lessons that show their work.
 """
 import pathlib
 import re
 
 LESSONS = sorted(pathlib.Path("src/content/lessons").glob("*.md"))
-print(f"{'lesson':<34}{'prose':>7}{'code':>7}{'total':>7}  {'prose note':<12}")
-print("-" * 74)
+print(f"{'lesson':<34}{'prose':>7}{'code':>7}{'total':>7}")
+print("-" * 60)
 
+totals = [0, 0]
 for path in LESSONS:
     text = path.read_text()
     body = re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S)
@@ -37,11 +40,9 @@ for path in LESSONS:
     prose = re.sub(r"<[^>]+>", " ", prose)
     prose_words = len(prose.split())
 
-    total = prose_words + code_words
-    if prose_words < 900:
-        verdict = "short"
-    elif prose_words > 1400:
-        verdict = "long, check"
-    else:
-        verdict = "ok"
-    print(f"{path.name:<34}{prose_words:>7}{code_words:>7}{total:>7}  {verdict:<12}")
+    totals[0] += prose_words
+    totals[1] += code_words
+    print(f"{path.name:<34}{prose_words:>7}{code_words:>7}{prose_words + code_words:>7}")
+
+print("-" * 60)
+print(f"{'course total':<34}{totals[0]:>7}{totals[1]:>7}{sum(totals):>7}")

@@ -37,7 +37,7 @@ jobs:
       - name: Verify the MCP server loads, enforces caps, and closes facts
         working-directory: labs
         run: python verify_mcp.py
-      - name: Report the lesson word budget (prose versus code)
+      - name: Report lesson length (prose versus code, no thresholds)
         run: python3 scripts/word_budget.py
 
   build:
