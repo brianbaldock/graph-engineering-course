@@ -36,11 +36,11 @@ Expected output:
 28 passed in 0.13s
 ```
 
-If those tests pass, every lab in this course will run on your machine. Nothing else is required for Parts 1 through 3.
+If those tests pass, every pure-Python lab in this course will run on your machine. Lesson 8 additionally needs an agent driver to wire the MCP server into.
 
 ## What you just installed
 
-Worth two minutes now, because later lessons say "open `graphlab/store.py`" without reintroducing it. The whole lab is about 1,200 lines of dependency-free Python:
+Worth two minutes now, because later lessons say "open `graphlab/store.py`" without reintroducing it. The whole lab is about 1,200 lines of Python. The graph core (store, validate, extract, ingest, pipeline) is pure standard library; only the policy loader needs PyYAML and the MCP server needs the `mcp` package, which is why `requirements.txt` is three lines long:
 
 | File | What it is |
 |---|---|
@@ -57,7 +57,7 @@ Worth two minutes now, because later lessons say "open `graphlab/store.py`" with
 One term the rest of the course leans on constantly: an **episode** is one raw source input the graph learned from, stored whole with its own timestamp and never rewritten. A meeting note, a commit message, a document. Edges point back to the episode that produced them, which is what makes a claim auditable rather than a bare assertion. The sample corpus has five of them, which is why the pipeline reports `episodes: 5`.
 
 <div class="callout">
-<strong>You do not need a driver yet.</strong> Parts 1 and 2 are pure Python against SQLite. Copilot CLI or Hermes only becomes necessary at Lesson 5 (model routing) and Lesson 8 (wiring the MCP server to an agent). If the pytest run above is green, your setup is complete for the next four lessons. Install a driver now if you want, but do not read the sections below as blockers.
+<strong>You do not need a driver yet.</strong> Lessons 2 through 7 are pure Python against SQLite. Copilot CLI or Hermes only becomes necessary at Lesson 8, where you wire the MCP server into an agent. If the pytest run above is green, your setup is complete for the next six lessons. Install a driver now if you want, but do not read the sections below as blockers.
 </div>
 
 ## Driver A: GitHub Copilot CLI

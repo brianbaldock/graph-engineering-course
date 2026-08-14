@@ -28,7 +28,7 @@ Now the graph can answer “Where did Alice work when Project Atlas started?” 
 
 ## The fact has a lifespan
 
-In this course, an `Edge` has `source`, `relation`, `target`, `valid_from`, `valid_until`, `episode_id`, and `confidence`. Its `cite()` method renders the edge with its time span and, when present, its source episode. The identity is still a triple, but the claim is a triple over an interval.
+In this course, an `Edge` has `source`, `relation`, `target`, `valid_from`, `valid_until`, `episode_id`, and `confidence`. Its `cite()` method renders the edge with its time span and, when present, its source episode. The claim at the centre is still a triple, but identity in the store is that triple plus `valid_from`: the same three nouns starting on two different dates are two different rows, which is what lets a fact be restated later without overwriting its own history.
 
 There are three useful shapes to recognize:
 

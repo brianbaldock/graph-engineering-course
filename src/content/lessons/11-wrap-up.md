@@ -42,7 +42,7 @@ That is a systems design skill, and it's the durable part of what you learned he
 Worth keeping somewhere you'll see them:
 
 1. **Using the most expensive model for everything.** You don't need maximum intelligence to determine that "Sam joined OpenAI in 2025" contains a person, an organization, and a date.
-2. **Forgetting prompt caching.** An identical 600-token schema across 5,000 requests is 3 million tokens of repeated context at full price for no reason.
+2. **Forgetting prompt caching.** An identical schema resent across thousands of requests is repeated context you may be paying full price for. Check the minimum cacheable length first: this lab's own 920-character prefix is too short to cache on Haiku 4.5, which is exactly why Lesson 4 tells you to measure instead of assuming.
 3. **Sending the entire graph to the model.** Retrieval exists. Find the relevant subgraph, then reason.
 4. **Treating every relationship as permanent.** People change jobs, services get replaced, dependencies disappear. A graph without time is wrong the moment the world moves.
 5. **Letting unvalidated extraction write to production.** One hallucinated relationship contaminates every future answer that touches it.
@@ -81,8 +81,8 @@ Ranked by how much you'll learn per hour:
 
 Not a certificate. A repo you can run:
 
-- A temporal knowledge graph with provenance on every edge
-- A validation gate with 28 passing tests
+- A temporal knowledge graph that carries provenance when an episode wrote the edge
+- A validation gate, with 28 passing tests across the whole lab
 - An extraction pipeline built for caching, with a free offline mode
 - Bounded subgraph retrieval that cites its evidence
 - An MCP server exposing it to Hermes and Copilot CLI, verified to load

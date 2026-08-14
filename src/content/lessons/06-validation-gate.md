@@ -41,7 +41,7 @@ This is why ingestion is a **data pipeline problem**, not an LLM call. The LLM i
 
 ## The gate
 
-The rule is simple: nothing reaches the graph without passing a validator that can explain its rejections.
+The rule is simple: nothing reaches the graph through the ingestion path without passing a validator that can explain its rejections. Every episode, whether it arrives from `ingest_episode` or from the MCP `add_knowledge` tool, goes through the gate. `GraphStore.add_edge()` sits below that line as the raw insert the gate itself calls, and the lessons use it directly when demonstrating storage mechanics. In a real system you would keep that method private, or route it through the gate too.
 
 ```
 LLM Extraction
@@ -63,7 +63,7 @@ Graph write
 
 Read those stage names as descriptions of intent, not as libraries. Every check is a hand-written Python predicate in `validate.py`; there is no JSON Schema dependency, and "JSON schema validation" here means "is this payload the shape we expect." Duplicate detection is also narrower than the diagram implies: it deduplicates entities *within a single payload*. It does not compare against episodes already in the graph. Cross-episode edge deduplication is handled one layer down, by the store's unique index, which is the `COALESCE` constraint from Lesson 3. Knowing which layer catches what matters the moment a duplicate slips through and you have to decide where to look.
 
-Open `labs/graphlab/validate.py`. It implements exactly that, in about 150 lines of plain Python. Here are the checks that matter most, and why.
+Open `labs/graphlab/validate.py`. It implements exactly that, in under 200 lines of plain Python. Here are the checks that matter most, and why.
 
 ### 1. A closed relation vocabulary
 

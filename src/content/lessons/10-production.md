@@ -40,7 +40,7 @@ Browser UI at `http://localhost:7474`, Bolt protocol on `7687`.
 
 ## Graphiti
 
-Graphiti is a temporal knowledge graph library for agent memory. It does the things this course had you build by hand: bi-temporal edges, entity resolution, incremental updates without full recomputation, and hybrid retrieval.
+Graphiti is a temporal knowledge graph library for agent memory. It productionizes the ideas this course built by hand, and goes further than the lab did: bi-temporal edges (the lab models valid time only and left observation time as a Lesson 3 exercise), real entity resolution (the lab has alias tables and a canonicalizer, not resolution), incremental updates without full recomputation, and hybrid retrieval (the lab uses SQL `LIKE`, with no vector component).
 
 The library is on PyPI:
 
@@ -138,7 +138,8 @@ copilot mcp add graphiti \
   --env OPENAI_API_KEY=sk-... \
   -- /absolute/path/to/uv run --isolated \
      --directory /absolute/path/to/graphiti/mcp_server \
-     --project . main.py --transport stdio
+     --project . main.py --transport stdio \
+     --database-provider neo4j
 ```
 
 Then confirm it actually came up, the same way you did in Lesson 8:

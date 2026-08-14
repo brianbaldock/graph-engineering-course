@@ -1,13 +1,16 @@
 ---
 # Verified source registry.
 #
-# Every external factual claim in the lessons points at an entry here.
-# The rule this course holds itself to: if we assert it, we link it, and
-# we record the date we checked it. Anything we could not verify against
-# a primary source does not get asserted.
+# Every external factual claim that names a vendor number, price, version,
+# or documented behaviour points at an entry here. The rule this course
+# holds itself to: if we assert it, we link it, and we record the date we
+# checked it. Anything we could not verify against a primary source does
+# not get asserted.
 #
-# scripts/verify_citations.py fails the build if a lesson cites a key
-# that does not exist here, or if an entry is missing its required fields.
+# What this file does NOT do: it cannot prove a claim was cited. The
+# verifier enforces that cited keys exist and entries are well formed
+# (scripts/verify_citations.py), not that every sentence carrying a fact
+# has a citation. That judgment is still human.
 
 anthropic-prompt-caching:
   title: "Prompt caching"

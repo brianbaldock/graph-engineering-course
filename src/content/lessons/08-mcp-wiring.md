@@ -53,7 +53,7 @@ There is no `run_query` tool. There is no `execute_cypher`. The four tools are e
 
 | Tool | Purpose |
 |---|---|
-| `search_entities` | Resolve a fuzzy phrase to canonical entity names. Call this first. |
+| `search_entities` | Resolve a loose phrase to canonical entity names by substring match. Call this first. |
 | `get_subgraph` | Retrieve a bounded neighbourhood, optionally as of a date. |
 | `add_knowledge` | Write an episode through the validation gate. |
 | `graph_stats` | Report size and shape. |

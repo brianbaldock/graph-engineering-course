@@ -1,5 +1,8 @@
 """Sample corpus for the labs. Deliberately messy: aliases, a job change,
-a hallucination trap, and dates in mixed formats.
+and dates in mixed formats. Note that the regex extractor finds nothing
+the validation gate rejects on this corpus, which is why the pipeline
+reports zero rejections; the hallucination traps that exercise the gate
+live in tests/test_graphlab.py.
 """
 
 EPISODES = [

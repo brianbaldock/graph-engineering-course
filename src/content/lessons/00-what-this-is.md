@@ -26,7 +26,7 @@ It is [Cat Wu's Claude Code demo](https://www.youtube.com/watch?v=5nmVr9_CuJg) f
 
 So:
 
-- **"No more prompting" is false.** Every node in an agentic graph is a prompt. Graph engineering doesn't remove prompting, it *demotes* it from the whole job to one component of a system. That's a real shift. It is not the abolition of prompting.
+- **"No more prompting" is false.** The model-calling nodes in an agentic graph are still prompts, and they still decide whether the system works. Graph engineering doesn't remove prompting, it *demotes* it from the whole job to one component of a system, sitting alongside deterministic nodes that never call a model at all. That's a real shift. It is not the abolition of prompting.
 - **The percentages are unsourced.** No named engineer, no talk, no citation. A number that arrives as 70, then 80, then 85, then 90 without anyone adding a source is not a measurement, it is decoration.
 - **The architecture underneath is real and worth learning.** That's what this course keeps.
 
@@ -103,7 +103,7 @@ Not out of contrarianism. Three reasons:
 You do not need an Anthropic API key for the core labs. Lessons that cost money are marked, and each has a free local alternative.
 
 <div class="callout">
-<strong>A standing rule for this course.</strong> Every command shown here was run before it was published. Where a widely-circulated config was wrong, this course says so and gives the verified one. You'll hit the first example of that in Lesson 8.
+<strong>A standing rule for this course.</strong> Every command shown here was run before it was published, and the lesson code examples are re-run by <code>labs/verify_lesson_examples.py</code> so a change to the lab that breaks a printed example fails the build. Where a widely-circulated config was wrong, this course says so and gives the verified one. You'll hit the first example of that in Lesson 8.
 </div>
 
 ## Who wrote this
