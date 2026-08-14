@@ -9,6 +9,19 @@ const first = lessons[0];
 ---
 <BaseLayout>
   <section class="wrap" style="padding:3.5rem 1.25rem 1rem;max-width:52rem">
+    {/*
+      Both covers ship and CSS picks one from html[data-theme]. The theme is a
+      persisted manual toggle, so a <picture> keyed on prefers-color-scheme
+      would show the wrong art to anyone who overrode their OS setting.
+      Cost is one unused ~55 KB WebP, which is cheaper than being wrong.
+    */}
+    <img class="cover cover-dark" src={`${base}/cover-dark.webp`}
+         alt="Graph Engineering: stop prompting, start building agentic graphs."
+         width="1672" height="941" fetchpriority="high" decoding="async" />
+    <img class="cover cover-light" src={`${base}/cover-light.webp`}
+         alt="Graph Engineering: stop prompting, start building agentic graphs."
+         width="1672" height="941" fetchpriority="high" decoding="async" />
+
     <p class="pill pill-accent">Free · Hands-on · No API key required</p>
     <h1 style="font-size:2.6rem;margin-top:1rem">Graph Engineering</h1>
     <p style="font-size:1.22rem;color:var(--fg-muted);margin-top:.4rem">{SITE_TAGLINE}</p>
@@ -82,3 +95,20 @@ const first = lessons[0];
     </ol>
   </section>
 </BaseLayout>
+
+<style>
+  /* Only one cover is ever displayed. display:none also removes the hidden one
+     from the accessibility tree, so the duplicated alt text is never announced
+     twice. Both files are still fetched by most browsers; that is the accepted
+     cost of honouring a manual theme toggle instead of prefers-color-scheme. */
+  .cover {
+    display: none;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1.75rem;
+  }
+  :global(html[data-theme='dark']) .cover-dark { display: block; }
+  :global(html[data-theme='light']) .cover-light { display: block; }
+</style>

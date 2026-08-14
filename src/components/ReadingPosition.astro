@@ -1,0 +1,232 @@
+---
+/**
+ * Reading position memory for lesson pages.
+ *
+ * Two separate problems, deliberately solved differently:
+ *
+ * 1. "Link me to a section"  -> anchor links on every heading. Astro already
+ *    generates the `id` attributes, so nothing needed to exist except a way to
+ *    grab the URL. These are real, shareable, and survive everything.
+ *
+ * 2. "Put me back where I was" -> a saved position in localStorage, offered as
+ *    a banner rather than applied automatically.
+ *
+ * The banner is the important call. Auto-scrolling on load is the obvious
+ * implementation and it is worse: it fights you every time you deliberately
+ * open a lesson at the top, it breaks the back button's own scroll restoration,
+ * and it moves content under the cursor mid-click. Offering it costs one click
+ * and is never wrong.
+ *
+ * Storage is localStorage keyed by pathname, so it is per-device and per-lesson
+ * and never leaves the browser. Nothing here is sent anywhere. That matters on
+ * a site with no login: reading position is behavioural data, and the honest
+ * version of "we remember where you were" is that your own browser does.
+ *
+ * Degrades to nothing without JS. The prose is unaffected.
+ */
+---
+<div id="resume-bar" hidden role="region" aria-label="Resume reading">
+  <span class="txt">You were reading <strong id="resume-label">this lesson</strong>.</span>
+  <button type="button" id="resume-go">Jump back</button>
+  <button type="button" id="resume-dismiss" aria-label="Dismiss and start from the top">Start over</button>
+</div>
+
+<script is:inline>
+  (function () {
+    // This component renders ABOVE <article>, and an is:inline script executes
+    // at its parse position. Running immediately means querySelector('article')
+    // returns null and the whole feature silently no-ops, which is exactly what
+    // happened the first time. Wait for the document before touching the DOM.
+    function init() {
+    var KEY = 'read-pos:' + location.pathname;
+    var store;
+    try {
+      store = window.localStorage;
+      store.setItem('__t', '1');
+      store.removeItem('__t');
+    } catch (e) {
+      // Private mode or blocked storage. Nothing to do; leave the page alone.
+      return;
+    }
+
+    var article = document.querySelector('article');
+    if (!article) return;
+
+    // --- heading anchors ---------------------------------------------
+    // Only headings Astro gave an id. Anything else cannot be linked to.
+    var headings = article.querySelectorAll('h2[id], h3[id]');
+    headings.forEach(function (h) {
+      var text = h.textContent.trim();
+      // Appending the link puts its label inside the heading, so the heading's
+      // accessible name becomes "The gate Link to this section: The gate".
+      // Pinning an explicit aria-label keeps the heading name clean while the
+      // link keeps its own descriptive one. Caught by reading the a11y tree,
+      // not by pa11y, which has no rule against a merely redundant name.
+      h.setAttribute('aria-label', text);
+      var a = document.createElement('a');
+      a.className = 'heading-anchor';
+      a.href = '#' + h.id;
+      a.setAttribute('aria-label', 'Link to this section: ' + text);
+      a.innerHTML = '<span aria-hidden="true">#</span>';
+      h.appendChild(a);
+    });
+
+    // --- save position -----------------------------------------------
+    // Record the last heading scrolled past, plus raw offset. The heading is
+    // what gets shown to the reader and what survives the page being edited;
+    // the offset is the precise restore. If the lesson changed and the heading
+    // is gone, the offset alone would land somewhere arbitrary, so the heading
+    // is the authority and the offset is only used when it still matches.
+    function current() {
+      var mark = null;
+      var limit = window.scrollY + 120;
+      headings.forEach(function (h) {
+        if (h.getBoundingClientRect().top + window.scrollY <= limit) mark = h;
+      });
+      return mark;
+    }
+
+    var pending = null;
+    function save() {
+      if (pending) return;
+      pending = setTimeout(function () {
+        pending = null;
+        var y = window.scrollY;
+        var doc = document.documentElement.scrollHeight - window.innerHeight;
+        // Near the top there is nothing to remember, and near the bottom the
+        // lesson is done. Clearing in both cases stops the banner appearing on
+        // a lesson the reader already finished.
+        if (y < 400 || (doc > 0 && y / doc > 0.95)) {
+          store.removeItem(KEY);
+          return;
+        }
+        var h = current();
+        try {
+          store.setItem(KEY, JSON.stringify({
+            y: Math.round(y),
+            id: h ? h.id : null,
+            label: h ? h.textContent.replace('#', '').trim() : null,
+            t: Date.now(),
+          }));
+        } catch (e) {}
+      }, 400);
+    }
+    addEventListener('scroll', save, { passive: true });
+    addEventListener('pagehide', save);
+
+    // --- offer it back ------------------------------------------------
+    // Skip entirely when the URL already carries a hash: an explicit section
+    // link is a stronger signal of intent than a remembered position.
+    if (location.hash) return;
+
+    var raw = store.getItem(KEY);
+    if (!raw) return;
+    var saved;
+    try { saved = JSON.parse(raw); } catch (e) { store.removeItem(KEY); return; }
+
+    // Expire after 60 days. A position older than that is noise, not memory.
+    if (!saved || Date.now() - (saved.t || 0) > 60 * 24 * 3600 * 1000) {
+      store.removeItem(KEY);
+      return;
+    }
+
+    var target = saved.id ? document.getElementById(saved.id) : null;
+    var bar = document.getElementById('resume-bar');
+    var label = document.getElementById('resume-label');
+    if (saved.label && target) label.textContent = saved.label;
+    bar.hidden = false;
+
+    document.getElementById('resume-go').addEventListener('click', function () {
+      var smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Hide the bar FIRST. Hiding it after scrolling removes its height from
+      // the flow above the target and the heading ends up overshot by exactly
+      // that much (measured: 58px). Collapse the layout, then aim at it.
+      bar.hidden = true;
+      if (target) {
+        target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+        // Move keyboard focus too, so screen-reader and keyboard users land
+        // where sighted users just got scrolled. tabindex -1 keeps the heading
+        // out of the tab order afterwards.
+        target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      } else {
+        scrollTo({ top: saved.y, behavior: smooth ? 'smooth' : 'auto' });
+      }
+    });
+
+    document.getElementById('resume-dismiss').addEventListener('click', function () {
+      store.removeItem(KEY);
+      bar.hidden = true;
+    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+<style>
+  #resume-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 0.95rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    background: var(--bg-elev);
+    font-size: 0.9rem;
+  }
+  #resume-bar[hidden] { display: none; }
+  #resume-bar .txt { color: var(--fg-muted); }
+  #resume-bar strong { color: var(--fg); font-weight: 600; }
+  #resume-bar button {
+    font: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--fg);
+  }
+  #resume-go {
+    border-color: var(--accent-strong) !important;
+    background: var(--accent-strong) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+  #resume-bar button:hover { filter: brightness(1.1); }
+  #resume-dismiss { color: var(--fg-muted) !important; }
+
+  /* Heading anchors: visible on hover and on keyboard focus. Focus matters
+     independently, since a keyboard user never triggers hover and would
+     otherwise tab to an invisible control. */
+  :global(.heading-anchor) {
+    margin-left: 0.4rem;
+    text-decoration: none;
+    color: var(--fg-muted);
+    opacity: 0;
+    font-weight: 400;
+    transition: opacity 0.12s ease;
+  }
+  :global(h2:hover) > :global(.heading-anchor),
+  :global(h3:hover) > :global(.heading-anchor),
+  :global(.heading-anchor:focus) {
+    opacity: 1;
+  }
+  :global(.heading-anchor:focus) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  /* Anchored headings otherwise land flush against the viewport edge. */
+  :global(h2[id]), :global(h3[id]) { scroll-margin-top: 1.5rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.heading-anchor) { transition: none; }
+  }
+</style>

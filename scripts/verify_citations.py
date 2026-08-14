@@ -96,26 +96,63 @@ if dead:
 print("\nAll citations resolve.")
 
 # --- outbound project links ------------------------------------------
-# The footer links Brian's other work. Same rule applies: a site that
+# The projects page links Brian's other work. Same rule applies: a site that
 # lectures readers about verification does not get to ship dead links.
-PROJECTS = ROOT / "src/components/OtherProjects.astro"
-if PROJECTS.exists():
-    urls = re.findall(r"url:\s*'([^']+)'", PROJECTS.read_text())
-    print(f"\nChecking {len(urls)} project links...")
-    broken = []
-    for url in urls:
-        r = subprocess.run(
-            ["curl", "-sL", "-o", "/dev/null", "-w", "%{http_code}",
-             "--max-time", "25", url],
-            capture_output=True, text=True,
-        )
-        code = r.stdout.strip()
-        print(f"  [{code}] {url}")
-        if not code.startswith("2"):
-            broken.append(f"{url} (HTTP {code})")
-    if broken:
-        print("\nDEAD PROJECT LINKS:")
-        for b in broken:
-            print(f"  {b}")
-        sys.exit(1)
-    print("All project links resolve.")
+#
+# This block used to be wrapped in `if PROJECTS.exists()`, which is fail-open:
+# renaming or moving the file made the check silently pass having tested
+# nothing. Same defect class as the CSS gate that scanned zero files. The path
+# is now required, and a zero-URL parse is a failure rather than a quiet
+# success, so a change to the data shape cannot disarm the check.
+PROJECTS = ROOT / "src/pages/projects.astro"
+if not PROJECTS.exists():
+    print(f"\nMISSING: {PROJECTS.relative_to(ROOT)} (project link check cannot run)")
+    sys.exit(1)
+text = PROJECTS.read_text()
+urls = re.findall(r"url:\s*'([^']+)'", text)
+if not urls:
+    print(f"\nNO PROJECT URLS parsed from {PROJECTS.relative_to(ROOT)}.")
+    print("  The `url: '...'` field shape changed. Update this regex.")
+    sys.exit(1)
+print(f"\nChecking {len(urls)} project links...")
+broken = []
+for url in urls:
+    r = subprocess.run(
+        ["curl", "-sL", "-o", "/dev/null", "-w", "%{http_code}",
+         "--max-time", "25", url],
+        capture_output=True, text=True,
+    )
+    code = r.stdout.strip()
+    print(f"  [{code}] {url}")
+    if not code.startswith("2"):
+        broken.append(f"{url} (HTTP {code})")
+if broken:
+    print("\nDEAD PROJECT LINKS:")
+    for b in broken:
+        print(f"  {b}")
+    sys.exit(1)
+print("All project links resolve.")
+# --- local image artifacts -------------------------------------------
+# Screenshots and covers are committed by hand, not generated at build time,
+# so a forgotten `git add` would otherwise ship a page of broken images that
+# still builds green. Existence plus a non-trivial size, since a 0-byte or
+# truncated file is the realistic failure, not an absent one.
+shots = re.findall(r"shot:\s*'([^']+)'", text)
+if not shots:
+    print("\nNO PROJECT SCREENSHOTS parsed. The `shot: '...'` field shape changed.")
+    sys.exit(1)
+required = shots + ["/og-cover.png", "/cover-dark.webp", "/cover-light.webp"]
+print(f"\nChecking {len(required)} local image artifacts...")
+missing = []
+for rel in required:
+    p = ROOT / "public" / rel.lstrip("/")
+    size = p.stat().st_size if p.exists() else 0
+    print(f"  [{size:>7} B] {rel}")
+    if size < 1024:
+        missing.append(f"{rel} ({'absent' if size == 0 else f'{size} B, truncated?'})")
+if missing:
+    print("\nMISSING OR EMPTY IMAGE ARTIFACTS:")
+    for m in missing:
+        print(f"  {m}")
+    sys.exit(1)
+print("All image artifacts present.")

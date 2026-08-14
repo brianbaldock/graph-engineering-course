@@ -3,6 +3,7 @@ import BaseLayout from './BaseLayout.astro';
 import Comments from '../components/Comments.astro';
 import CollabNote from '../components/CollabNote.astro';
 import Sources from '../components/Sources.astro';
+import ReadingPosition from '../components/ReadingPosition.astro';
 
 const { entry, prev, next } = Astro.props;
 const d = entry.data;
@@ -19,6 +20,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <p class="muted" style="font-size:1.05rem;margin-top:0">{d.summary}</p>
     <hr />
     <CollabNote />
+    <ReadingPosition />
     <article><slot /></article>
 
     <Sources keys={d.sources} />

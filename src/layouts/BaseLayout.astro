@@ -1,12 +1,15 @@
 ---
 import '../styles/global.css';
-import { SITE_TITLE, SITE_DESCRIPTION, REPO_URL, GOATCOUNTER_URL } from '../consts';
-import OtherProjects from '../components/OtherProjects.astro';
+import { SITE_TITLE, SITE_DESCRIPTION, GOATCOUNTER_URL } from '../consts';
 
 interface Props { title?: string; description?: string; }
 const { title, description = SITE_DESCRIPTION } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : `${SITE_TITLE} | Stop prompting. Start building agentic graphs.`;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+// Social cards need an absolute URL and a format every scraper reads, which is
+// why this is a PNG while the on-page covers are WebP. Built from the same
+// source art by scripts/import_covers.py.
+const ogImage = new URL(`${base}/og-cover.png`, Astro.site ?? Astro.url).href;
 ---
 <!doctype html>
 <html lang="en" data-theme="dark">
@@ -18,6 +21,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="canonical" href={Astro.url.href} />
     <script is:inline>
       (function () {
@@ -54,7 +62,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         <nav style="display:flex;gap:1rem;font-size:.92rem;margin-left:auto;align-items:center">
           <a href={`${base}/lessons/`}>Lessons</a>
           <a href={`${base}/setup/`}>Setup</a>
-          <a href={REPO_URL}>Repo</a>
+          <a href={`${base}/projects/`}>Projects</a>
           <button id="theme-toggle" type="button" aria-label="Toggle colour theme"
             style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--fg);cursor:pointer;padding:.2rem .5rem;font-size:.85rem">
             ☾/☀
@@ -67,13 +75,15 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
     <footer style="border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--fg-muted);font-size:.87rem">
       <div class="wrap">
-        <OtherProjects />
-        <p style="margin:1.75rem 0 .4rem">
+        <p style="margin:0 0 .4rem">
           Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.
         </p>
         <p style="margin:0">
           This course teaches an architecture, not a marketing claim. See{' '}
           <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
+        </p>
+        <p style="margin:.4rem 0 0">
+          <a href={`${base}/projects/`}>Other projects</a>
         </p>
       </div>
     </footer>
