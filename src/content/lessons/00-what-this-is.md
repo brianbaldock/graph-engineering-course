@@ -16,7 +16,7 @@ You probably got here from a post that looked something like this:
 
 > "Anthropic engineer: 90% of our engineers were using self‑improving loops. Now everyone shifted to building agentic Graphs" "No more prompting."
 
-That is [a real post](https://x.com/zodchiii/status/2083134599832408208), from 31 July 2026, and it is quoted here verbatim rather than paraphrased. Let's deal with it first, because starting a course on a false premise is a bad way to learn anything.
+That is [a real post](https://x.com/zodchiii/status/2083134599832408208), from 31 July 2026, quoted verbatim rather than paraphrased. It is worth dealing with first, because starting a course on a false premise is a bad way to learn anything.
 
 ## The hype, audited
 
