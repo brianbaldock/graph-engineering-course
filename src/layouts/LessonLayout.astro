@@ -4,6 +4,7 @@ import Comments from '../components/Comments.astro';
 import Sources from '../components/Sources.astro';
 import ReadingPosition from '../components/ReadingPosition.astro';
 import LessonNav from '../components/LessonNav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import { getCollection } from 'astro:content';
 
 const { entry, prev, next, headings = [] } = Astro.props;
@@ -81,14 +82,7 @@ const jsonLd = {
         column instead, where a footer actually behaves like one.
       */}
       <footer class="lesson-foot">
-        <div class="wrap prose-wrap">
-          <p style="margin:0 0 .4rem">Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.</p>
-          <p style="margin:0">
-            This course teaches an architecture, not a marketing claim. See{' '}
-            <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
-          </p>
-          <p style="margin:.4rem 0 0"><a href={`${base}/projects/`}>Other projects</a></p>
-        </div>
+        <SiteFooter innerClass="wrap prose-wrap" />
       </footer>
     </div>
   </div>

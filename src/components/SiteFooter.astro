@@ -1,0 +1,58 @@
+---
+/**
+ * The site footer, in one place.
+ *
+ * This markup previously existed twice, verbatim, in BaseLayout and
+ * LessonLayout (the fixed lesson shell needs its footer inside the scrolling
+ * column rather than as a sibling of <main>, so the element could not simply
+ * be shared by position). Two copies of the same legal and attribution text
+ * is a drift hazard: editing the licence line in one and not the other would
+ * publish two different claims about the same course.
+ *
+ * So the CONTENT lives here and the two layouts differ only in the wrapper
+ * they pass in.
+ *
+ * Layout: one centred line, pipe-separated, so it costs a single row instead
+ * of three. The pipes are decorative separators, not content, so they are
+ * aria-hidden and the segments stay as distinct spans. On a narrow screen the
+ * line wraps at the separators rather than overflowing.
+ */
+interface Props {
+  /** Class for the inner container: 'wrap' site-wide, 'wrap prose-wrap' on lessons. */
+  innerClass?: string;
+}
+const { innerClass = 'wrap' } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<div class={innerClass}>
+  <p class="foot-line">
+    <span class="foot-seg">Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.</span>
+    <span class="foot-seg">
+      This course teaches an architecture, not a marketing claim. See{' '}
+      <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
+    </span>
+    <span class="foot-seg"><a href={`${base}/projects/`}>Other projects</a></span>
+  </p>
+</div>
+
+<style>
+  .foot-line {
+    margin: 0;
+    text-align: center;
+    /* Normal inline flow rather than flex. Flex made each separator its own
+       item, so a pipe could be pushed to the end of a wrapped line and sit
+       there orphaned with nothing after it. As inline text with the
+       separator attached to the segment, a pipe can never end a line alone. */
+    text-wrap: balance;
+  }
+
+  .foot-seg + .foot-seg::before {
+    /* Decorative separator. Lives in CSS, not the DOM, so screen readers read
+       three clean statements instead of "vertical bar" between each. The
+       non-breaking space binds it to the text that follows. */
+    content: '|\00a0';
+    margin-left: 0.5rem;
+    opacity: 0.45;
+  }
+</style>

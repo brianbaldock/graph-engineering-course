@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import SiteFooter from '../components/SiteFooter.astro';
 import { SITE_TITLE, SITE_DESCRIPTION, GOATCOUNTER_URL } from '../consts';
 
 interface Props {
@@ -107,18 +108,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
     */}
     {shell !== 'lesson' && (
     <footer style="border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--fg-muted);font-size:.87rem">
-      <div class="wrap">
-        <p style="margin:0 0 .4rem">
-          Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.
-        </p>
-        <p style="margin:0">
-          This course teaches an architecture, not a marketing claim. See{' '}
-          <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
-        </p>
-        <p style="margin:.4rem 0 0">
-          <a href={`${base}/projects/`}>Other projects</a>
-        </p>
-      </div>
+      <SiteFooter />
     </footer>
     )}
 
