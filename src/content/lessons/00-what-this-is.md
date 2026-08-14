@@ -108,15 +108,15 @@ You do not need an Anthropic API key for the core labs. Lessons that cost money 
 
 ## Who wrote this
 
-This course was written by Brian Baldock with substantial assistance from Hermes, an AI agent, working together since May 2026, about eleven weeks at the time of writing. Hermes did research, wrote and ran the lab code, executed the verification, and drafted prose. Brian directed the work, reviewed it, and is responsible for what is published here. Code is MIT licensed, prose CC BY 4.0.
+This course was written by me, Brian Baldock, with substantial assistance from Hermes, my AI agent. We've been working together since May 2026, about eleven weeks at the time of the writing of this course. Hermes helped me research the material, wrote and ran the lab code, executed the verification, and drafted prose. I set the direction, reviewed the work, and am responsible for what is published here. Code is MIT licensed, prose CC BY 4.0.
 
-That disclosure matters more than usual. A course that spends its first page auditing an unsourced viral claim does not get to be quiet about how it was made.
+Why "admit" I used AI? To me that disclosure matters more than usual. A course that spends its first page auditing an unsourced viral claim does not get to be quiet about how it was made.
 
-It also sets an honest boundary on the word "we." These rules come from running a real agent deployment and getting things wrong first:
+It also sets an honest boundary on the word "we." All of the rules in this course come from running a real agent deployment and getting things wrong first:
 
-- **Validate before you write, and record why you rejected something.** Learned by shipping a health check gated on file modification time, which fired incorrectly because an unrelated write looked identical to the event it watched for. Modification time answers "did this change," not "did this run do its job."
-- **Verify by artifact, never by status string.** Learned from scheduled jobs that reported success while doing no work. Lesson 8's verifier exists in its current shape because of that habit.
-- **Close facts temporally instead of overwriting them.** Learned from designing a memory system where losing the previous state made questions about the past unanswerable.
+- **Validate before you write, and record why you rejected something.** Hermes and I learned this by shipping a health check gated on file modification time, which fired incorrectly because an unrelated write looked identical to the event it watched for. Modification time answers "did this change," not "did this run do its job."
+- **Verify by artifact, never by status string.** We learned this one from scheduled cron jobs that reported success while doing no work, and it took me a while to catch on to. Lesson 8's verifier exists in its current shape because of that habit.
+- **Close facts temporally instead of overwriting them.** Learned from designing a memory system where losing the previous state made questions about the past unanswerable, this for obvious reasons.
 - **Route cheap and expensive work to different models.** Learned from cost pressure, and from a CLI call that failed because reasoning-effort levels are not universal across models. That is why Lesson 7 publishes the effort levels with a per-model caveat rather than as a portable list.
 
 The `graphlab` package is a minimal executable textbook for those rules. It is **not** the production memory system behind that collaboration, which is file-backed rather than a SQLite graph. Treating a teaching lab as a production architecture would be the exact fabrication this course rejects. The principles are load-bearing; the lab is how you run them yourself in five minutes without an API key.
