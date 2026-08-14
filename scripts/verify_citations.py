@@ -6,6 +6,7 @@ This runs in CI so a dead link fails the build instead of quietly rotting.
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -68,6 +69,37 @@ if fails:
 
 print(f"{len(data)} sources, schema OK. Checking reachability...\n")
 
+def probe(url, want, attempts=3):
+    """Return the HTTP status for url, retrying transient rate limits.
+
+    A shared CI runner IP gets rate limited by large sites (YouTube returns
+    429) even though the link is perfectly alive. Treating that as a dead
+    citation is a false positive that trains people to ignore the gate, which
+    is worse than the gate not existing. So retry 429 and 5xx with a backoff,
+    and only report the status if it persists.
+
+    Deliberately NOT retried: 404 and other 4xx. Those are real answers, and
+    retrying them would slow the build down to re-confirm a genuine failure.
+    """
+    code = ""
+    for i in range(attempts):
+        r = subprocess.run(
+            ["curl", "-sL", "-o", "/dev/null", "-w", "%{http_code}",
+             "--max-time", "20", url],
+            capture_output=True, text=True,
+        )
+        code = r.stdout.strip()
+        ok = code.startswith("2") if want == "2xx" else code == want
+        if ok:
+            return code, True
+        # 000 is curl's "could not connect", also worth a retry.
+        transient = code in ("000", "408", "429") or code.startswith("5")
+        if not transient or i == attempts - 1:
+            return code, False
+        time.sleep(3 * (i + 1))
+    return code, False
+
+
 dead = []
 for key, entry in data.items():
     url = entry["url"]
@@ -76,12 +108,7 @@ for key, entry in data.items():
     # condition for that entry. Declare it explicitly rather than
     # special-casing it in code.
     want = str(entry.get("expect_status", "2xx"))
-    r = subprocess.run(
-        ["curl", "-sL", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "20", url],
-        capture_output=True, text=True,
-    )
-    code = r.stdout.strip()
-    ok = code.startswith("2") if want == "2xx" else code == want
+    code, ok = probe(url, want)
     note = "" if want == "2xx" else f"  (expected {want})"
     print(f"  [{code}] {key:28} {url}{note}")
     if not ok:
