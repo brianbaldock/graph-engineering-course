@@ -1,13 +1,50 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
-import { SITE_TAGLINE } from '../consts';
+import { SITE_TAGLINE, SITE_DESCRIPTION } from '../consts';
 
 const lessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const first = lessons[0];
+
+// Course-level structured data, with the real syllabus built from the same
+// collection that renders the outline below. Generated rather than hand-listed
+// so it cannot drift from the lessons that actually exist.
+const siteUrl = new URL(`${base}/`, Astro.site ?? Astro.url).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Graph Engineering',
+  url: siteUrl,
+  description: SITE_DESCRIPTION,
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  teaches: [
+    'Temporal knowledge graphs for agent memory',
+    'Validation gates for extracted facts',
+    'Prompt caching and extraction cost control',
+    'Bounded subgraph retrieval',
+    'Model routing policy',
+    'Wiring a graph to an agent over MCP',
+  ],
+  provider: { '@type': 'Person', name: 'Brian Baldock', url: 'https://blog.brianbaldock.net/' },
+  author: { '@type': 'Person', name: 'Brian Baldock' },
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online',
+    courseWorkload: `PT${lessons.reduce((n, l) => n + l.data.minutes, 0)}M`,
+  },
+  syllabusSections: lessons.map((l) => ({
+    '@type': 'Syllabus',
+    name: l.data.title,
+    description: l.data.summary,
+    position: l.data.order,
+    timeRequired: `PT${l.data.minutes}M`,
+    url: new URL(`${base}/lessons/${l.id}/`, Astro.site ?? Astro.url).href,
+  })),
+};
 ---
-<BaseLayout>
+<BaseLayout jsonLd={jsonLd}>
   <section class="wrap" style="padding:3.5rem 1.25rem 1rem;max-width:52rem">
     {/*
       Both covers ship and CSS picks one from html[data-theme]. The theme is a

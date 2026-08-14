@@ -91,6 +91,13 @@ jobs:
         # and how much came out of it. Recompute from the record so the
         # figures cannot drift upward.
         run: python3 scripts/verify_collab_stats.py
+      - name: Verify SEO metadata and structured data
+        # Reads dist/, so it has to run after the build. Checks that every
+        # page has a production canonical, that every ld+json block actually
+        # parses, and that robots/sitemap shipped. Malformed structured data
+        # is invisible in a browser and silently useless to a crawler, which
+        # is exactly the class of failure worth gating on.
+        run: python3 scripts/verify_seo.py
       - name: Accessibility check
         run: |
           # pa11y-ci drives a pinned puppeteer-core that demands one exact

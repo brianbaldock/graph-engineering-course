@@ -8,8 +8,39 @@ import ReadingPosition from '../components/ReadingPosition.astro';
 const { entry, prev, next } = Astro.props;
 const d = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Structured data. Lessons are LearningResource (a TechArticle subtype Google
+// understands) rather than bare Article: this is instructional material with a
+// position in a sequence and a stated time commitment, and saying so is both
+// more accurate and more useful in results.
+//
+// No datePublished/dateModified here on purpose. The frontmatter carries no
+// dates, and synthesising one from build time would assert a fact the repo
+// cannot support, which is the exact habit the course argues against.
+const lessonUrl = new URL(`${base}/lessons/${entry.id}/`, Astro.site ?? Astro.url).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LearningResource',
+  name: d.title,
+  description: d.summary,
+  url: lessonUrl,
+  learningResourceType: d.hands_on ? 'Hands-on exercise' : 'Lesson',
+  educationalLevel: 'Intermediate',
+  timeRequired: `PT${d.minutes}M`,
+  position: d.order,
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  author: { '@type': 'Person', name: 'Brian Baldock' },
+  isPartOf: {
+    '@type': 'Course',
+    name: 'Graph Engineering',
+    description: 'A hands-on course in agentic graph engineering.',
+    url: new URL(`${base}/`, Astro.site ?? Astro.url).href,
+    provider: { '@type': 'Person', name: 'Brian Baldock' },
+  },
+};
 ---
-<BaseLayout title={d.title} description={d.summary}>
+<BaseLayout title={d.title} description={d.summary} jsonLd={jsonLd}>
   <div class="wrap prose-wrap" style="padding-top:2.2rem">
     <p style="margin:0 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
       <span class="pill">{d.part}</span>
