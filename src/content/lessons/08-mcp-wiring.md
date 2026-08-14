@@ -1,7 +1,7 @@
 ---
 title: "Wiring the graph into Hermes and Copilot CLI"
 order: 8
-part: "Part 3 — Making it affordable"
+part: "Part 3: Making it affordable"
 summary: "Expose your graph over MCP so your agent has memory that survives the session. Includes a config from the viral article that does not work."
 minutes: 30
 hands_on: true

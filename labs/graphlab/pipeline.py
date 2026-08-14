@@ -56,7 +56,7 @@ def build(db: str = ":memory:", verbose: bool = True) -> GraphStore:
 
 def demo_queries(store: GraphStore) -> None:
     print("\n" + "=" * 68)
-    print("SELECTIVE RETRIEVAL — the whole graph is never sent to the model")
+    print("SELECTIVE RETRIEVAL: the whole graph is never sent to the model")
     print("=" * 68)
 
     q1 = "Where did Alice work when Project Atlas started?"

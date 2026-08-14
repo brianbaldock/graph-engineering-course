@@ -1,7 +1,7 @@
 ---
 title: "Measure it, do not assume it"
 order: 9
-part: "Part 3 — Making it affordable"
+part: "Part 3: Making it affordable"
 summary: "The metrics that expose extraction quality, cache behavior, retrieval bounds, and real cost per episode."
 minutes: 25
 hands_on: true

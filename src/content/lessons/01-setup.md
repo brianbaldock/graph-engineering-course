@@ -1,7 +1,7 @@
 ---
 title: "Setup: Hermes and Copilot CLI"
 order: 1
-part: "Part 0 — Orientation"
+part: "Part 0: Orientation"
 summary: "Get one of the two drivers running, plus the lab repo. Ten minutes, no API key."
 minutes: 15
 hands_on: true

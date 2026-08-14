@@ -1,7 +1,7 @@
 ---
 title: "The routing policy: make the tradeoff executable"
 order: 7
-part: "Part 3 — Making it affordable"
+part: "Part 3: Making it affordable"
 summary: "A model-routing policy that separates cheap ingestion from expensive, evidence-bound traversal."
 minutes: 20
 hands_on: true

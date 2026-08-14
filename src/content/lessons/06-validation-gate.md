@@ -1,7 +1,7 @@
 ---
 title: "The validation gate: stopping bad data before it compounds"
 order: 6
-part: "Part 2 — Building the pipeline"
+part: "Part 2: Building the pipeline"
 summary: "A knowledge graph has a nasty property. Bad data doesn't just sit there, it reproduces."
 minutes: 30
 hands_on: true

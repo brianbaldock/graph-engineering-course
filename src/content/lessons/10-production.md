@@ -1,7 +1,7 @@
 ---
 title: "The production track: Neo4j and Graphiti"
 order: 10
-part: "Part 4 — Production"
+part: "Part 4: Production"
 summary: "When SQLite stops being enough, and the verified Graphiti MCP config the viral article got wrong."
 minutes: 30
 hands_on: true

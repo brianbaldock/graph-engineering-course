@@ -1,7 +1,7 @@
 ---
 title: "Graphs versus vectors, and why the answer is both"
 order: 2
-part: "Part 1 — Foundations"
+part: "Part 1: Foundations"
 summary: "Similarity is not structure. What each store is actually good at, and where the hybrid seam goes."
 minutes: 20
 hands_on: false

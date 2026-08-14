@@ -1,7 +1,7 @@
 ---
 title: "What this is, and what it isn't"
 order: 0
-part: "Part 0 — Orientation"
+part: "Part 0: Orientation"
 summary: "The honest version of the graph engineering pitch, minus the hype that got it trending."
 minutes: 10
 hands_on: false

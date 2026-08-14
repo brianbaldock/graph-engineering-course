@@ -1,7 +1,7 @@
 ---
 title: "What you actually learned"
 order: 11
-part: "Part 4 — Production"
+part: "Part 4: Production"
 summary: "The transferable lesson, the mistakes worth remembering, and how to read the next viral architecture thread."
 minutes: 15
 hands_on: false

@@ -1,5 +1,5 @@
 """
-graphlab — a tiny temporal knowledge graph on SQLite.
+graphlab: a tiny temporal knowledge graph on SQLite.
 
 No server, no cloud, no API key. This is the reference store used by the
 Graph Engineering course labs. It is deliberately small enough to read in

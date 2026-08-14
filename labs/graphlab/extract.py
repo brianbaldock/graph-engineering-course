@@ -2,10 +2,10 @@
 
 Two backends, one interface:
 
-  RegexExtractor  — deterministic, free, offline. Used by the core labs so
+  RegexExtractor  : deterministic, free, offline. Used by the core labs so
                     you can run everything without an API key and get the
                     same result every time.
-  ClaudeExtractor — the real thing, with the cached stable prefix. Costs
+  ClaudeExtractor : the real thing, with the cached stable prefix. Costs
                     money. Marked optional in the course.
 
 The point of this file is the SHAPE, not the cleverness: a stable schema
@@ -136,7 +136,7 @@ class RegexExtractor:
 
 
 # ---------------------------------------------------------------------------
-# Paid backend — the shape that matters
+# Paid backend: the shape that matters
 # ---------------------------------------------------------------------------
 
 

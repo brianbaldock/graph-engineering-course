@@ -1,7 +1,7 @@
 ---
 title: "Extraction, and what it actually costs"
 order: 4
-part: "Part 2 — Building the pipeline"
+part: "Part 2: Building the pipeline"
 summary: "Why ingestion dominates graph-memory cost, and how cached prefixes, low effort, and batching change the bill."
 minutes: 25
 hands_on: true

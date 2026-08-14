@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""graphlab MCP server — expose the course knowledge graph as agent memory.
+"""graphlab MCP server: expose the course knowledge graph as agent memory.
 
 Works with any MCP client. The course wires it into two:
   * Hermes Agent    (~/.hermes/config.yaml -> mcp_servers)

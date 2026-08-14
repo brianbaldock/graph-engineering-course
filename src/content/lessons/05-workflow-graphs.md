@@ -1,7 +1,7 @@
 ---
 title: "Agentic workflow graphs: prompts with contracts"
 order: 5
-part: "Part 2 — Building the pipeline"
+part: "Part 2: Building the pipeline"
 summary: "Build a directed system of narrow, testable nodes instead of one giant prompt."
 minutes: 25
 hands_on: false

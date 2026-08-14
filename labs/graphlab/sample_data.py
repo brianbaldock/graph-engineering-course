@@ -31,7 +31,7 @@ EPISODES = [
 ]
 
 # Aliases you seed by hand. Entity resolution is a data problem, not a
-# prompting problem — see Lesson 6.
+# prompting problem, see Lesson 6.
 ALIASES = {
     "Northwind Inc": "Northwind",
     "Atlas": "Project Atlas",

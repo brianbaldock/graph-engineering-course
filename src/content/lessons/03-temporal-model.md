@@ -1,7 +1,7 @@
 ---
 title: "The temporal model: time is not metadata"
 order: 3
-part: "Part 1 — Foundations"
+part: "Part 1: Foundations"
 summary: "Put time on relationships, preserve expired facts, and answer questions about the world as it was."
 minutes: 25
 hands_on: true
