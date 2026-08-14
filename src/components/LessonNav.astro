@@ -1,0 +1,320 @@
+---
+/**
+ * Lesson tree sidebar.
+ *
+ * A persistent left rail on lesson pages: every lesson grouped by part, with
+ * the current lesson expanded to show its own h2 sections. Three jobs:
+ *
+ *   1. Orientation. You can always see where this lesson sits in the whole
+ *      course, and which section of it you are currently reading.
+ *   2. Progress. Each lesson has a checkbox. Ticking it marks the lesson done.
+ *   3. Navigation. Everything is a real link, so it works without JS and
+ *      middle-click/open-in-new-tab behave normally.
+ *
+ * Storage: localStorage, not cookies. Cookies would be sent to the server on
+ * every request for data the server has no use for, and this site has no
+ * server-side anything: it is static files on GitHub Pages. Progress is
+ * per-device by design. The honest version of "the site remembers" on a site
+ * with no login is that your own browser remembers.
+ *
+ * The active-section highlight uses IntersectionObserver rather than a scroll
+ * handler, so it costs nothing on the main thread while scrolling.
+ */
+interface Heading { depth: number; slug: string; text: string }
+interface Props {
+  lessons: { id: string; data: { order: number; title: string; part: string; minutes: number; hands_on: boolean } }[];
+  currentId?: string;
+  headings?: Heading[];
+}
+const { lessons, currentId, headings = [] } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const parts: string[] = [];
+for (const l of lessons) if (!parts.includes(l.data.part)) parts.push(l.data.part);
+
+// Only h2 in the rail. h3 exists in these lessons but nesting three levels
+// deep in a 16rem rail produces a column of wrapped fragments, and the reader
+// already has in-page anchors for that granularity.
+const sections = headings.filter((h) => h.depth === 2);
+---
+
+<nav class="lesson-rail" aria-label="Course contents" data-current={currentId}>
+  <div class="rail-head">
+    <span class="rail-title">Course contents</span>
+    <span class="rail-progress" id="rail-progress" aria-live="polite"></span>
+  </div>
+
+  {parts.map((part) => (
+    <div class="rail-part">
+      <p class="rail-part-name">{part}</p>
+      <ul class="rail-list">
+        {lessons.filter((l) => l.data.part === part).map((l) => (
+          <li class={l.id === currentId ? 'rail-item is-current' : 'rail-item'}>
+            <div class="rail-row">
+              {/*
+                A real checkbox, not a styled div. Keyboard, screen reader and
+                form semantics all come free, and the label association means
+                the accessible name is the lesson title rather than "checkbox".
+              */}
+              <input
+                type="checkbox"
+                class="rail-check"
+                id={`done-${l.id}`}
+                data-lesson={l.id}
+                aria-label={`Mark lesson ${l.data.order}, ${l.data.title}, as complete`}
+              />
+              <a class="rail-link" href={`${base}/lessons/${l.id}/`}>
+                <span class="rail-num">{l.data.order}</span>
+                <span class="rail-text">{l.data.title}</span>
+              </a>
+            </div>
+
+            {l.id === currentId && sections.length > 0 && (
+              <ul class="rail-sections">
+                {sections.map((h) => (
+                  <li>
+                    <a href={`#${h.slug}`} data-section={h.slug}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+
+  <button type="button" id="rail-reset" class="rail-reset">Reset progress</button>
+</nav>
+
+<script is:inline>
+  (function () {
+    function init() {
+      var KEY = 'lesson-progress';
+      var store;
+      try {
+        store = window.localStorage;
+        store.setItem('__t', '1');
+        store.removeItem('__t');
+      } catch (e) {
+        // Blocked storage: the rail still navigates, it just cannot remember.
+        // Hide the affordances that would silently do nothing.
+        var boxes = document.querySelectorAll('.rail-check');
+        for (var i = 0; i < boxes.length; i++) boxes[i].hidden = true;
+        var rst = document.getElementById('rail-reset');
+        if (rst) rst.hidden = true;
+        return;
+      }
+
+      var rail = document.querySelector('.lesson-rail');
+      if (!rail) return;
+
+      function read() {
+        try { return JSON.parse(store.getItem(KEY) || '{}') || {}; }
+        catch (e) { return {}; }
+      }
+      function write(v) {
+        try { store.setItem(KEY, JSON.stringify(v)); } catch (e) {}
+      }
+
+      var checks = rail.querySelectorAll('.rail-check');
+      var counter = document.getElementById('rail-progress');
+
+      function paint() {
+        var done = read();
+        var n = 0;
+        checks.forEach(function (c) {
+          var isDone = !!done[c.dataset.lesson];
+          c.checked = isDone;
+          c.closest('.rail-item').classList.toggle('is-done', isDone);
+          if (isDone) n++;
+        });
+        if (counter) {
+          counter.textContent = n + '/' + checks.length;
+          counter.title = n + ' of ' + checks.length + ' lessons marked complete';
+        }
+      }
+
+      checks.forEach(function (c) {
+        c.addEventListener('change', function () {
+          var done = read();
+          if (c.checked) done[c.dataset.lesson] = Date.now();
+          else delete done[c.dataset.lesson];
+          write(done);
+          paint();
+        });
+      });
+
+      var reset = document.getElementById('rail-reset');
+      if (reset) {
+        reset.addEventListener('click', function () {
+          // Destructive and easy to hit by accident next to a column of
+          // checkboxes, so make it say what it will destroy.
+          var n = Object.keys(read()).length;
+          if (!n) return;
+          if (!confirm('Clear progress on ' + n + ' lesson' + (n === 1 ? '' : 's') + '?')) return;
+          write({});
+          paint();
+        });
+      }
+
+      paint();
+
+      // --- active section highlight ------------------------------------
+      var links = rail.querySelectorAll('.rail-sections a');
+      if (!links.length || !('IntersectionObserver' in window)) return;
+
+      var map = {};
+      links.forEach(function (a) { map[a.dataset.section] = a; });
+
+      var visible = {};
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          visible[e.target.id] = e.isIntersecting;
+        });
+        // Highlight the first heading currently on screen. Using the first
+        // rather than the last keeps the marker on the section you are
+        // reading into, not the one scrolling off the top.
+        var chosen = null;
+        for (var id in map) {
+          if (visible[id]) { chosen = id; break; }
+        }
+        for (var id2 in map) {
+          map[id2].classList.toggle('is-active', id2 === chosen);
+          if (id2 === chosen) map[id2].setAttribute('aria-current', 'true');
+          else map[id2].removeAttribute('aria-current');
+        }
+      }, { rootMargin: '-80px 0px -70% 0px' });
+
+      Object.keys(map).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) obs.observe(el);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+<style>
+  .lesson-rail {
+    font-size: 0.86rem;
+    padding: 1.4rem 0.9rem 2.5rem 1.25rem;
+  }
+  .rail-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .rail-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    font-weight: 600;
+  }
+  .rail-progress {
+    font-size: 0.72rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .rail-part { margin-bottom: 1.15rem; }
+  .rail-part-name {
+    margin: 0 0 0.4rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    opacity: 0.75;
+  }
+  .rail-list { list-style: none; margin: 0; padding: 0; }
+  .rail-item { margin: 0 0 0.12rem; }
+  .rail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    border-radius: 6px;
+    padding: 0.22rem 0.4rem 0.22rem 0.3rem;
+  }
+  .rail-item.is-current > .rail-row { background: var(--bg-elev); }
+
+  .rail-check {
+    margin: 0.25rem 0 0;
+    flex: none;
+    width: 0.92rem;
+    height: 0.92rem;
+    accent-color: var(--accent-strong);
+    cursor: pointer;
+  }
+  .rail-link {
+    display: flex;
+    gap: 0.45rem;
+    text-decoration: none;
+    color: var(--fg-muted);
+    line-height: 1.35;
+  }
+  .rail-item.is-current > .rail-row .rail-link { color: var(--fg); font-weight: 600; }
+  .rail-link:hover { color: var(--fg); }
+  .rail-num {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.6;
+    min-width: 1.05rem;
+  }
+  /* Struck-through text on a completed lesson reads as "cancelled" more than
+     "done", so completion just dims it and the checkbox carries the meaning. */
+  .rail-item.is-done .rail-text { opacity: 0.55; }
+
+  .rail-sections {
+    list-style: none;
+    margin: 0.15rem 0 0.5rem;
+    padding: 0 0 0 1.55rem;
+    border-left: 1px solid var(--border);
+    margin-left: 0.72rem;
+  }
+  .rail-sections li { margin: 0.1rem 0; }
+  .rail-sections a {
+    display: block;
+    padding: 0.13rem 0.35rem;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--fg-muted);
+    font-size: 0.82rem;
+    line-height: 1.3;
+    border-left: 2px solid transparent;
+    margin-left: -1.6rem;
+    padding-left: 1.6rem;
+  }
+  .rail-sections a:hover { color: var(--fg); }
+  .rail-sections a.is-active {
+    color: var(--fg);
+    border-left-color: var(--accent);
+    background: var(--bg-elev);
+  }
+
+  .rail-reset {
+    margin-top: 0.6rem;
+    font: inherit;
+    font-size: 0.76rem;
+    color: var(--fg-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+  }
+  .rail-reset:hover { color: var(--fg); }
+
+  .lesson-rail a:focus-visible,
+  .rail-check:focus-visible,
+  .rail-reset:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>

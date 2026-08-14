@@ -132,3 +132,83 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
   position: absolute; left: -9999px;
 }
 .skip:focus { left: 1rem; top: 1rem; z-index: 50; background: var(--bg-elev); padding: .5rem .9rem; border: 1px solid var(--accent); border-radius: 6px; }
+
+/* ---------------------------------------------------------------------------
+   Fixed lesson shell.
+
+   Header and left rail stay put; only the article column scrolls. Applied by
+   BaseLayout via shell="lesson" so it affects lesson pages only. Everything
+   else keeps ordinary document scrolling.
+
+   Implementation notes worth keeping:
+
+   - The scroll container is a child element, not <body>. That means anchor
+     jumps, :target, and scrollIntoView all still work, because the browser
+     scrolls the nearest scrollable ancestor. Fixing <body> with
+     position:fixed would have broken all three.
+   - dvh, not vh. On mobile browsers vh is the tallest possible viewport and
+     ignores the retracting URL bar, which puts the bottom of a 100vh shell
+     permanently under the chrome. dvh tracks the real visible height.
+   - The whole thing collapses back to normal document flow under 60rem. A
+     fixed sidebar on a phone is a rail eating half a small screen; the rail
+     becomes an ordinary block above the article, which is also the reading
+     order screen readers get.
+--------------------------------------------------------------------------- */
+.shell-fixed {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.shell-fixed .site-header { flex: none; }
+.shell-fixed main {
+  flex: 1 1 auto;
+  min-height: 0;   /* without this the flex child refuses to shrink and the
+                      inner overflow never engages */
+}
+
+.lesson-shell { display: block; height: 100%; }
+
+.shell-fixed .lesson-shell {
+  display: grid;
+  grid-template-columns: 17.5rem minmax(0, 1fr);
+  height: 100%;
+}
+
+.shell-fixed .lesson-shell-rail {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* stop rail scroll chaining to the article */
+  height: 100%;
+}
+
+.shell-fixed .lesson-shell-main {
+  overflow-y: auto;
+  height: 100%;
+  scroll-padding-top: 1.5rem;
+}
+
+/* The rail is a plain block on narrow screens, above the article. */
+@media (max-width: 60rem) {
+  .shell-fixed {
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+  .shell-fixed .lesson-shell {
+    display: block;
+    height: auto;
+  }
+  .shell-fixed .lesson-shell-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+    height: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .shell-fixed .lesson-shell-main {
+    overflow-y: visible;
+    height: auto;
+  }
+}

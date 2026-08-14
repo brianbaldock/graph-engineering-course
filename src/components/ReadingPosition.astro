@@ -52,6 +52,31 @@
     var article = document.querySelector('article');
     if (!article) return;
 
+    // Which element actually scrolls.
+    //
+    // On lesson pages the fixed shell moves scrolling off the window and onto
+    // #lesson-scroll, so listening on window and reading window.scrollY
+    // silently records nothing: the handler never fires and every position is
+    // null. Found by scrolling 1200px in a real browser and seeing an empty
+    // localStorage key. Resolve the scroller once and use it everywhere.
+    var scroller = document.getElementById('lesson-scroll');
+    var usesWindow = !scroller;
+    var scrollTarget = scroller || window;
+
+    function scrollTop() {
+      return usesWindow ? window.scrollY : scroller.scrollTop;
+    }
+    function viewportHeight() {
+      return usesWindow ? window.innerHeight : scroller.clientHeight;
+    }
+    function fullHeight() {
+      return usesWindow ? document.documentElement.scrollHeight : scroller.scrollHeight;
+    }
+    function scrollToY(y, smooth) {
+      var opts = { top: y, behavior: smooth ? 'smooth' : 'auto' };
+      if (usesWindow) scrollTo(opts); else scroller.scrollTo(opts);
+    }
+
     // --- heading anchors ---------------------------------------------
     // Only headings Astro gave an id. Anything else cannot be linked to.
     var headings = article.querySelectorAll('h2[id], h3[id]');
@@ -79,9 +104,12 @@
     // is the authority and the offset is only used when it still matches.
     function current() {
       var mark = null;
-      var limit = window.scrollY + 120;
+      // Heading offsets must be measured against the scroller, not the page.
+      // getBoundingClientRect is viewport-relative either way, so compare it
+      // to the scroller's own top edge rather than adding window.scrollY.
+      var originTop = usesWindow ? 0 : scroller.getBoundingClientRect().top;
       headings.forEach(function (h) {
-        if (h.getBoundingClientRect().top + window.scrollY <= limit) mark = h;
+        if (h.getBoundingClientRect().top - originTop <= 120) mark = h;
       });
       return mark;
     }
@@ -91,8 +119,8 @@
       if (pending) return;
       pending = setTimeout(function () {
         pending = null;
-        var y = window.scrollY;
-        var doc = document.documentElement.scrollHeight - window.innerHeight;
+        var y = scrollTop();
+        var doc = fullHeight() - viewportHeight();
         // Near the top there is nothing to remember, and near the bottom the
         // lesson is done. Clearing in both cases stops the banner appearing on
         // a lesson the reader already finished.
@@ -111,7 +139,7 @@
         } catch (e) {}
       }, 400);
     }
-    addEventListener('scroll', save, { passive: true });
+    scrollTarget.addEventListener('scroll', save, { passive: true });
     addEventListener('pagehide', save);
 
     // --- offer it back ------------------------------------------------
@@ -150,7 +178,7 @@
         target.setAttribute('tabindex', '-1');
         target.focus({ preventScroll: true });
       } else {
-        scrollTo({ top: saved.y, behavior: smooth ? 'smooth' : 'auto' });
+        scrollToY(saved.y, smooth);
       }
     });
 

@@ -1,13 +1,18 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Comments from '../components/Comments.astro';
-import CollabNote from '../components/CollabNote.astro';
 import Sources from '../components/Sources.astro';
 import ReadingPosition from '../components/ReadingPosition.astro';
+import LessonNav from '../components/LessonNav.astro';
+import { getCollection } from 'astro:content';
 
-const { entry, prev, next } = Astro.props;
+const { entry, prev, next, headings = [] } = Astro.props;
 const d = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// The rail lists every lesson, so it needs the whole collection, not just
+// this entry. Sorted the same way the outline and the [...slug] route sort.
+const allLessons = (await getCollection('lessons')).sort((a, b) => a.data.order - b.data.order);
 
 // Structured data. Lessons are LearningResource (a TechArticle subtype Google
 // understands) rather than bare Article: this is instructional material with a
@@ -40,28 +45,61 @@ const jsonLd = {
   },
 };
 ---
-<BaseLayout title={d.title} description={d.summary} jsonLd={jsonLd}>
-  <div class="wrap prose-wrap" style="padding-top:2.2rem">
-    <p style="margin:0 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-      <span class="pill">{d.part}</span>
-      <span class="pill">{d.minutes} min</span>
-      {d.hands_on && <span class="pill pill-accent">Hands-on</span>}
-    </p>
-    <h1>{d.title}</h1>
-    <p class="muted" style="font-size:1.05rem;margin-top:0">{d.summary}</p>
-    <hr />
-    <CollabNote />
-    <ReadingPosition />
-    <article><slot /></article>
+<BaseLayout title={d.title} description={d.summary} jsonLd={jsonLd} shell="lesson">
+  <div class="lesson-shell">
+    <aside class="lesson-shell-rail">
+      <LessonNav lessons={allLessons} currentId={entry.id} headings={headings} />
+    </aside>
 
-    <Sources keys={d.sources} />
+    <div class="lesson-shell-main" id="lesson-scroll">
+      <div class="wrap prose-wrap" style="padding-top:2.2rem">
+        <p style="margin:0 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <span class="pill">{d.part}</span>
+          <span class="pill">{d.minutes} min</span>
+          {d.hands_on && <span class="pill pill-accent">Hands-on</span>}
+        </p>
+        <h1>{d.title}</h1>
+        <p class="muted" style="font-size:1.05rem;margin-top:0">{d.summary}</p>
+        <hr />
+        <ReadingPosition />
+        <article><slot /></article>
 
-    <nav style="display:flex;justify-content:space-between;gap:1rem;margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:.92rem">
-      <span>{prev && <a href={`${base}/lessons/${prev.id}/`}>&larr; {prev.data.title}</a>}</span>
-      <span style="text-align:right">{next && <a href={`${base}/lessons/${next.id}/`}>{next.data.title} &rarr;</a>}</span>
-    </nav>
-    <p style="margin-top:1.5rem"><a href={`${base}/lessons/`}>All lessons</a></p>
+        <Sources keys={d.sources} />
 
-    <Comments />
+        <nav style="display:flex;justify-content:space-between;gap:1rem;margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:.92rem">
+          <span>{prev && <a href={`${base}/lessons/${prev.id}/`}>&larr; {prev.data.title}</a>}</span>
+          <span style="text-align:right">{next && <a href={`${base}/lessons/${next.id}/`}>{next.data.title} &rarr;</a>}</span>
+        </nav>
+        <p style="margin-top:1.5rem"><a href={`${base}/lessons/`}>All lessons</a></p>
+
+        <Comments />
+      </div>
+
+      {/*
+        The shell fixes the header and rail, so the global footer would sit
+        pinned across the viewport. It belongs at the end of the scrolling
+        column instead, where a footer actually behaves like one.
+      */}
+      <footer class="lesson-foot">
+        <div class="wrap prose-wrap">
+          <p style="margin:0 0 .4rem">Built by Brian Baldock with Hermes. Code MIT-licensed, prose CC BY 4.0.</p>
+          <p style="margin:0">
+            This course teaches an architecture, not a marketing claim. See{' '}
+            <a href={`${base}/lessons/00-what-this-is/`}>what this is and isn't</a>.
+          </p>
+          <p style="margin:.4rem 0 0"><a href={`${base}/projects/`}>Other projects</a></p>
+        </div>
+      </footer>
+    </div>
   </div>
 </BaseLayout>
+
+<style>
+  .lesson-foot {
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+    padding: 2rem 0 3rem;
+    color: var(--fg-muted);
+    font-size: 0.87rem;
+  }
+</style>

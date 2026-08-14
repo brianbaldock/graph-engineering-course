@@ -20,8 +20,15 @@ NOTE = ROOT / "src/components/CollabNote.astro"
 LESSON0 = ROOT / "src/content/lessons/00-what-this-is.md"
 STAMP = ROOT / "src/data/collab_stats.json"
 
-text = NOTE.read_text()
+# CollabNote.astro was removed (it repeated on every lesson). Lesson 0 is now
+# the single disclosure. Read the component only if it comes back, so this
+# script keeps working either way rather than crashing on a missing path.
+text = NOTE.read_text() if NOTE.exists() else ""
 lesson0 = LESSON0.read_text() if LESSON0.exists() else ""
+if not lesson0:
+    sys.exit("FAIL: 00-what-this-is.md is missing; cannot verify collaboration claims.")
+# The counts are checked wherever they are actually asserted.
+text = text + "\n" + lesson0
 
 # Where the ground truth comes from.
 #
@@ -106,22 +113,23 @@ def check_duration(blob, label):
     return found
 
 
-found_note = check_duration(text, "CollabNote.astro")
+found_note = check_duration(lesson0, "00-what-this-is.md")
 if not found_note:
-    fails.append("CollabNote.astro: no duration claim found to verify")
-
-# Lesson 0 tells the same story in prose. An earlier version of this script
-# only looked at the component, so the lesson could drift independently.
-check_duration(lesson0, "00-what-this-is.md")
+    fails.append("00-what-this-is.md: no duration claim found to verify")
 
 # --- claimed counts --------------------------------------------------
+# These lived in CollabNote.astro, a per-lesson banner that was removed as
+# repetitive; Lesson 0's "Who wrote this" section is now the single place the
+# collaboration is disclosed. The count patterns below are checked only if
+# the prose still makes those claims. A claim that is not made cannot drift,
+# but a claim that IS made still has to be true, so this stays fail-closed on
+# a wrong number while tolerating a removed sentence.
 for pattern, actual, label in (
     (r"(\d+) days of working notes", journal_days, "journal days"),
     (r"(\d+) skills", skills, "skills"),
 ):
     m = re.search(pattern, text)
     if not m:
-        fails.append(f"no {label} claim found")
         continue
     claimed = int(m.group(1))
     if claimed > actual:
