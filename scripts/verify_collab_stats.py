@@ -1,6 +1,7 @@
 """Keep the collaboration disclaimer's numbers true.
 
-CollabNote.astro states how long Brian and Hermes have worked together and
+Lesson 0's "Who wrote this" section states how long Brian and Hermes have
+worked together and
 how much material came out of it. Those are factual claims on a site whose
 opening argument is that unsourced numbers are decoration. So recompute
 them from the real Hermes home and fail if the published figures drift.
@@ -90,7 +91,16 @@ def _num(word):
 
 
 def check_duration(blob, label):
-    """Any duration claim about the collaboration, wherever it is written."""
+    """Any duration claim about the collaboration, wherever it is written.
+
+    Checked in BOTH directions. An earlier version only failed when the prose
+    rounded UP, which meant "about one week" sailed through against a
+    twelve-week record: technically not an overclaim, but still false, and a
+    course about verifying numbers does not get to publish a false one just
+    because it errs modestly. The band is deliberately generous on the low
+    side because "about eleven weeks" against 11.6 real weeks is honest
+    rounding, not drift.
+    """
     found = False
     for pat, unit, limit in (
         (r"roughly (\w+) months", "months", months),
@@ -109,6 +119,11 @@ def check_duration(blob, label):
                 fails.append(
                     f"{label}: claims '{word} {unit}' but the record spans "
                     f"{limit:.1f} {unit}. Do not round up."
+                )
+            elif claimed < limit * 0.6:
+                fails.append(
+                    f"{label}: claims '{word} {unit}' but the record spans "
+                    f"{limit:.1f} {unit}. That understates it enough to be wrong."
                 )
     return found
 
@@ -139,7 +154,8 @@ if fails:
     print("\nCOLLABORATION CLAIMS OUT OF DATE:")
     for f in fails:
         print(f"  {f}")
-    print("\nUpdate src/components/CollabNote.astro to match the measured values.")
+    print("\nUpdate the 'Who wrote this' section of "
+          "src/content/lessons/00-what-this-is.md to match the measured values.")
     sys.exit(1)
 
 print("Collaboration claims are backed by the record.")

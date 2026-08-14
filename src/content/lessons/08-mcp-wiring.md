@@ -224,7 +224,7 @@ Those are then injected into every platform toolset, so the graph is available i
 Three Hermes-specific facts worth internalizing:
 
 1. **No hot reload.** Config change means restart.
-2. **Filtered environment.** Only `PATH`, `HOME`, `USER`, `LANG`, `LC_ALL`, `TERM`, `SHELL`, `TMPDIR` and `XDG_*` are inherited by the subprocess. Every other variable, including any API key, must be named explicitly under `env:`. That's a deliberate guard against leaking your whole shell environment to a third-party MCP server, and it is a good default that other clients don't have.
+2. **Filtered environment.** On Linux and macOS only `PATH`, `HOME`, `USER`, `LANG`, `LC_ALL`, `TERM`, `SHELL` and `TMPDIR` are inherited by the subprocess, plus a set of Windows location variables when running there. Every other variable, including any API key, must be named explicitly under `env:`. That's a deliberate guard against leaking your whole shell environment to a third-party MCP server, and it is a good default that other clients don't have.
 3. **Errors are redacted.** Credential-shaped patterns in MCP error messages are stripped before reaching the model.
 
 ## Two kinds of memory, one system

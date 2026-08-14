@@ -5,6 +5,8 @@ part: "Part 3: Making it affordable"
 summary: "A model-routing policy that separates cheap ingestion from expensive, evidence-bound traversal."
 minutes: 20
 hands_on: true
+sources:
+  - copilot-cli-docs
 ---
 
 "Spend intelligence where intelligence is needed" is a useful idea and a useless implementation. Until it is a file your system loads, it is a slogan that disappears under deadline pressure.

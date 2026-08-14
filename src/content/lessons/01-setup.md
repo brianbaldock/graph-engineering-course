@@ -141,7 +141,7 @@ Tools land in the registry as `mcp__{server}__{tool}` (two underscores on each s
 Two things to know before Lesson 8:
 
 - **Restart is required.** There's no hot-reload for MCP servers. Add config, restart the agent.
-- **The environment is filtered.** Hermes does not pass your whole shell environment to MCP subprocesses. Only `PATH`, `HOME`, `USER`, `LANG`, `TERM`, `SHELL`, `TMPDIR` and `XDG_*` are inherited. Anything else, including API keys, must be named explicitly under `env:`. That's a deliberate credential-leak guard, and it's the reason `GRAPHLAB_DB` appears above.
+- **The environment is filtered.** Hermes does not pass your whole shell environment to MCP subprocesses. On Linux and macOS only `PATH`, `HOME`, `USER`, `LANG`, `LC_ALL`, `TERM`, `SHELL` and `TMPDIR` are inherited (a further set of Windows location variables is allowed on Windows). Anything else, including API keys, must be named explicitly under `env:`. That's a deliberate credential-leak guard, and it's the reason `GRAPHLAB_DB` appears above.
 
 ## Use absolute paths everywhere
 

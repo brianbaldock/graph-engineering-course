@@ -5,6 +5,8 @@ part: "Part 2: Building the pipeline"
 summary: "Build a directed system of narrow, testable nodes instead of one giant prompt."
 minutes: 25
 hands_on: false
+sources:
+  - copilot-cli-docs
 ---
 
 Lesson 0 gave “graph engineering” two meanings. The first is knowledge-graph memory: facts, relationships, and time stored as queryable structure. This lesson is about the other one: an **agentic workflow graph**, where the system's work is a directed graph of small nodes with explicit edges.

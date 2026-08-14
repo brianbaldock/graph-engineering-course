@@ -5,6 +5,8 @@ part: "Part 4: Production"
 summary: "The transferable lesson, the mistakes worth remembering, and how to read the next viral architecture thread."
 minutes: 15
 hands_on: false
+sources:
+  - anthropic-prompt-caching
 ---
 
 ## The through-line
@@ -64,7 +66,7 @@ You'll see another architecture claim go viral within a month. Here's the audit 
 That's the balance worth holding. Cynicism and credulity are both ways of not doing the work.
 
 <div class="callout">
-<strong>The claim that should have tipped you off.</strong> "No more prompting." Every node in an agentic graph is a prompt. Graph engineering doesn't eliminate prompting, it demotes prompting from being the whole job to being one component with a defined contract and a testable output. That's a real and valuable shift. It just isn't the one the headline promised.
+<strong>The claim that should have tipped you off.</strong> "No more prompting." The model-calling nodes in an agentic graph are still prompts, and the deterministic nodes around them were never prompts to begin with. Graph engineering doesn't eliminate prompting, it demotes prompting from being the whole job to being one component with a defined contract and a testable output. That's a real and valuable shift. It just isn't the one the headline promised.
 </div>
 
 ## Where to take it

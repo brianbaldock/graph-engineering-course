@@ -41,7 +41,9 @@ This is why ingestion is a **data pipeline problem**, not an LLM call. The LLM i
 
 ## The gate
 
-The rule is simple: nothing reaches the graph through the ingestion path without passing a validator that can explain its rejections. Every episode, whether it arrives from `ingest_episode` or from the MCP `add_knowledge` tool, goes through the gate. `GraphStore.add_edge()` sits below that line as the raw insert the gate itself calls, and the lessons use it directly when demonstrating storage mechanics. In a real system you would keep that method private, or route it through the gate too.
+The rule is simple: no new entity or edge reaches the graph through the ingestion path without passing a validator that can explain its rejections.
+
+Two things deliberately sit outside that rule, and it is worth knowing exactly what they are. The raw episode text is stored first, because it is the provenance record the rejections are reported against. And a temporal close runs before the gate, because closing an edge is not the assertion of a new fact, it is bounding one that is already in the graph and was validated when it arrived. Lesson 3 covers why that ordering is deliberate. `GraphStore.add_edge()` sits below the line too, as the raw insert the gate itself calls, and the lessons use it directly when demonstrating storage mechanics. In a real system you would keep that method private, or route it through the gate too.
 
 ```
 LLM Extraction
